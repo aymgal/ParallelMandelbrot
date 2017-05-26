@@ -11,9 +11,11 @@
 
 
 #ifdef MPI_MASTER_WORKERS
-#define WORK_TAG    2
-#define FEEBACK_TAG 1
-#define END_TAG     0
+#define FIRST_WORK_TAG 4
+#define WORK_TAG       3
+#define FEEBACK_TAG    2
+#define END_TAG        1
+#define LAST_END_TAG   0
 #endif
 
 
@@ -22,22 +24,22 @@ Mandelbrot::Mandelbrot(int nx, int ny,
                        dfloat x_min, dfloat x_max, 
                        dfloat y_min, dfloat y_max,
                        int n_iter, int n_rows, MPI_Comm comm)
-: m_global_nx(nx), m_global_ny(ny), 
-  m_global_xmin(x_min), m_global_xmax(x_max), 
-  m_global_ymin(y_min), m_global_ymax(y_max),
-  m_max_iter(n_iter), m_mandel_set(nx, ny),
-  m_pdumper(new DumperBinary(m_mandel_set.storage(), comm)),
-  m_communicator(comm)
+    : m_global_nx(nx), m_global_ny(ny), 
+      m_global_xmin(x_min), m_global_xmax(x_max), 
+      m_global_ymin(y_min), m_global_ymax(y_max),
+      m_max_iter(n_iter), m_mandel_set(nx, ny),
+      m_pdumper(new DumperBinary(m_mandel_set.storage(), comm)),
+      m_n_rows(n_rows), m_communicator(comm)
 #else
 Mandelbrot::Mandelbrot(int nx, int ny, 
                        dfloat x_min, dfloat x_max, 
                        dfloat y_min, dfloat y_max,
                        int n_iter)
-: m_global_nx(nx), m_global_ny(ny), 
-  m_global_xmin(x_min), m_global_xmax(x_max), 
-  m_global_ymin(y_min), m_global_ymax(y_max),
-  m_max_iter(n_iter), m_mandel_set(nx, ny),
-  m_pdumper(new DumperASCII(m_mandel_set.storage()))
+    : m_global_nx(nx), m_global_ny(ny), 
+      m_global_xmin(x_min), m_global_xmax(x_max), 
+      m_global_ymin(y_min), m_global_ymax(y_max),
+      m_max_iter(n_iter), m_mandel_set(nx, ny),
+      m_pdumper(new DumperASCII(m_mandel_set.storage()))
 #endif
 {
   m_mod_z2_th = 4.0;
@@ -55,8 +57,6 @@ Mandelbrot::Mandelbrot(int nx, int ny,
   // get the number of proc and the rank in the proc
   MPI_Comm_rank(m_communicator, &m_prank);
   MPI_Comm_size(m_communicator, &m_psize);
-
-  m_n_rows = n_rows;
 
 #if defined(MPI_SIMPLE)
   init_mpi_simple();
@@ -105,7 +105,7 @@ void Mandelbrot::run(bool output_img) {
 #ifdef OUTPUT_TIMINGS
   auto end = MPI_Wtime();
   if (m_prank == 0) {
-    std::cout << "Time to compute : " << end-start << std::endl;
+    std::cout << m_global_nx << " " << end-start << std::endl;
   }
 #endif
 
@@ -124,7 +124,7 @@ void Mandelbrot::run(bool output_img) {
 #ifdef OUTPUT_TIMINGS
   auto end = clk::now();
   second compute_time = end - start;
-  std::cout << "Time to compute : " << compute_time.count() << std::endl;
+  std::cout << m_global_nx << " " << compute_time.count() << std::endl;
 #endif
 
 
@@ -161,7 +161,8 @@ void Mandelbrot::init_mpi_simple() {
 
 void Mandelbrot::mpi_master() {
   int w_prank; // worker prank
-  int row_count, row_idx, n_busy;
+  // int row_count;
+  int row_idx, n_busy;
   MPI_Status status;
   int w_feeback = 1;
 
@@ -179,21 +180,19 @@ void Mandelbrot::mpi_master() {
   /* compute local sizes for each worker + put them in lists to send */
   // initial sendings
   n_busy = 0;
+  row_idx = 0;
   for (w_prank = 1; w_prank <= n_workers; w_prank++) {
-    row_idx = w_prank - 1;
-
     // get corresponding local sizes
     buf_locals = get_row_def(row_idx, m_global_nx, m_global_ny, m_n_rows);
 
     // and send them to worker
-    MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, WORK_TAG, m_communicator);
+    int work_tag = (w_prank == 1 ? FIRST_WORK_TAG : WORK_TAG);
+    MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, work_tag, m_communicator);
 
     n_busy++;
-
-    if (w_prank == TEST_RANK) std::cerr << "Init send buf_locals" << std::endl;
   }
 
-  row_count = 0; // keep track of confirmed computed rows
+  int next_row_idx = n_workers;
 
   /* 'infinite' loop to feed workers with new rows */
   for (;;) {
@@ -202,31 +201,25 @@ void Mandelbrot::mpi_master() {
              MPI_ANY_SOURCE, FEEBACK_TAG, m_communicator, &status);
     w_prank = status.MPI_SOURCE;
 
-    if (m_prank == TEST_RANK) std::cerr << "Recv w_feeback" << std::endl;
-
-    row_count++; // increment the number of computed rows
-
-    std::cerr << "==> computed rows = " << row_count << std::endl;
-
-    /* find index of next row */
-    row_idx = row_count + n_busy;
-
-    std::cerr << "--> next row index = " << row_idx << std::endl;
+    std::cerr << "--> next row index = " << next_row_idx << std::endl;
 
     /* send new work */
-    if (row_idx < m_n_rows) {
+    if (next_row_idx < m_n_rows) {
+
       // get corresponding local sizes
-      buf_locals = get_row_def(row_idx, m_global_nx, m_global_ny, m_n_rows);
+      buf_locals = get_row_def(next_row_idx, m_global_nx, m_global_ny, m_n_rows);
       // and send them to worker
       MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, WORK_TAG, m_communicator);
 
       if (m_prank == TEST_RANK) std::cerr << "Send buf_locals" << std::endl;
+
+      next_row_idx++;
     }
 
     /* or tell to quit */
     else {
-      buf_locals = {-1, -1, -1, -1};
-      MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, END_TAG, m_communicator);
+      int end_tag = (n_busy == 1 ? LAST_END_TAG : END_TAG);
+      MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, end_tag, m_communicator);
       std::cerr << "Send END_TAG to rank " << w_prank << std::endl;
       n_busy--;
     }
@@ -249,7 +242,9 @@ void Mandelbrot::mpi_worker(bool output_img) {
   std::vector<int> buf_locals(4);
 
   // set the dumper communicator so that only workers can write the image
-  m_pdumper->set_communicator(m_MW_communicator);
+  m_pdumper->set_mpi_communicator(m_MW_communicator);
+
+  MPI_Barrier(m_MW_communicator);
 
   /* infinite loop */
   for (;;) {
@@ -257,7 +252,18 @@ void Mandelbrot::mpi_worker(bool output_img) {
     MPI_Recv(&buf_locals[0], 4, MPI_INT, 
              0, MPI_ANY_TAG, m_communicator, &status);
 
-    if (status.MPI_TAG == END_TAG) {
+    if (status.MPI_TAG == FIRST_WORK_TAG) {
+      std::cerr << m_prank << " first tag !" << std::endl;
+      m_pdumper->open_mpi_file();
+    }
+    else if (status.MPI_TAG == LAST_END_TAG) {
+      std::cerr << m_prank << " last tag !" << std::endl;
+      m_pdumper->close_mpi_file();
+    }
+
+    if ((status.MPI_TAG == LAST_END_TAG) || (status.MPI_TAG == END_TAG)) {
+      std::cerr << m_prank << " order to quit ..." << std::endl;
+      MPI_Barrier(m_MW_communicator);
       std::cerr << "... byebye rank " << m_prank << std::endl;
       break;
     }
@@ -294,7 +300,6 @@ void Mandelbrot::mpi_worker(bool output_img) {
 
   } /* end infinite loop */
 
-  // MPI_Barrier(m_MW_communicator);
 }
 
 #endif /* PARALLEL_MPI */

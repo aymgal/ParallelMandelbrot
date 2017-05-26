@@ -1,3 +1,4 @@
+#include <sstream>
 #ifdef PARALLEL_MPI
 #include <mpi.h>
 #endif
@@ -28,6 +29,8 @@ public:
 protected:
   const Grid & m_grid;
   float m_min, m_max;
+  std::stringstream m_sfilename;
+
 #ifdef PARALLEL_MPI
   MPI_Comm m_communicator;
 #endif
@@ -38,7 +41,9 @@ class DumperASCII : public Dumper {
 public:
 #ifdef PARALLEL_MPI
   explicit DumperASCII(const Grid & grid, MPI_Comm comm)
-      : Dumper(grid, comm) {}
+      : Dumper(grid, comm) {
+    m_sfilename << "out_default.pgm";
+  }
 #else
   explicit DumperASCII(const Grid & grid)
       : Dumper(grid) {}
@@ -51,18 +56,21 @@ public:
 class DumperBinary : public Dumper {
 public:
   explicit DumperBinary(const Grid & grid, MPI_Comm comm)
-      : Dumper(grid, comm) {
-    m_header_written = false;
+      : Dumper(grid, comm), m_header_written(false) {
+    m_sfilename << "out_default.bmp";
   }
 
   virtual void dump(int arg1, int arg2);
 
   void dump_manual(int offset_h, int total_h);
 
-  void set_communicator(MPI_Comm new_comm);
+  void set_mpi_communicator(MPI_Comm new_comm);
+  void open_mpi_file();
+  void close_mpi_file();
 
 private:
   bool m_header_written;
+  MPI_File m_fh;
 };
 #endif
 

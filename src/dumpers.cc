@@ -1,13 +1,11 @@
 #include <array>
 #include <fstream>
 #include <iomanip>
-#include <sstream>
-
 #include <iostream>
 
 #include "dumpers.hh"
-#include "gvars.hh"
 #include "grid.hh"
+#include "gvars.hh"
 
 #define COLOR_LEVELS 100.0
 
@@ -30,7 +28,6 @@ float Dumper::max() const {
 
 void DumperASCII::dump(int arg1, int arg2) {
   std::ofstream fout;
-  std::stringstream sfilename;
 
   int m = m_grid.nx();
   int n = m_grid.ny();
@@ -39,9 +36,9 @@ void DumperASCII::dump(int arg1, int arg2) {
   // set_max(m_grid.get_max());
   set_max(COLOR_LEVELS);
 
-  sfilename << "out_" << arg1 << "_" << arg2 << ".pgm";
+  m_sfilename << "out_" << arg1 << "_" << arg2 << ".pgm";
 
-  fout.open(sfilename.str());
+  fout.open(m_sfilename.str());
 
   fout << "P2" << std::endl 
        << "# CREATOR: Mandelbrot serial program" << std::endl;
@@ -64,13 +61,11 @@ void DumperASCII::dump(int arg1, int arg2) {
 
 void DumperBinary::dump(int arg1, int arg2) {
 
-  std::stringstream sfilename;
-
   int prank, psize;
   MPI_Comm_rank(m_communicator, &prank);
   MPI_Comm_size(m_communicator, &psize);
 
-  sfilename << "out_" << arg1 << "_" << arg2 << ".bmp";
+  m_sfilename << "out_" << arg1 << "_" << arg2 << ".bmp";
 
   int h = m_grid.nx();
   int w = m_grid.ny();
@@ -152,22 +147,17 @@ void DumperBinary::dump(int arg1, int arg2) {
   bmpinfoheader[22] = (filesize - 54) >> 16;
   bmpinfoheader[23] = (filesize - 54) >> 24;
 
-  MPI_File fh;
   MPI_Status status;
 
-  // opening a file in write and create mode
-  MPI_File_open(m_communicator, sfilename.str().c_str(),
-                MPI_MODE_WRONLY | MPI_MODE_CREATE,
-                MPI_INFO_NULL, &fh);
+  open_mpi_file();
 
   // defining the size of the file
-  MPI_File_set_size(fh, filesize);
+  MPI_File_set_size(m_fh, filesize);
 
-  // rank 0 writes the header
-  // if (prank == 0) {
+  // write the header
   if (!m_header_written) {
-    MPI_File_write_at(fh, 0, bmpfileheader.data(), 14, MPI_CHAR, &status);
-    MPI_File_write_at(fh, 14, bmpinfoheader.data(), 40, MPI_CHAR, &status);
+    MPI_File_write_at(m_fh, 0, bmpfileheader.data(), 14, MPI_CHAR, &status);
+    MPI_File_write_at(m_fh, 14, bmpinfoheader.data(), 40, MPI_CHAR, &status);
     m_header_written = true;
   }
 
@@ -175,23 +165,20 @@ void DumperBinary::dump(int arg1, int arg2) {
 
   // We also could write that data with a write_at, the view is just to show
   // different possibilities
-  MPI_File_set_view(fh, offset, MPI_CHAR, MPI_CHAR, "native", MPI_INFO_NULL);
+  MPI_File_set_view(m_fh, offset, MPI_CHAR, MPI_CHAR, "native", MPI_INFO_NULL);
 
-  MPI_File_write(fh, img.data(), img.size(), MPI_CHAR, &status);
-  MPI_File_close(&fh);
+  MPI_File_write(m_fh, img.data(), img.size(), MPI_CHAR, &status);
+  close_mpi_file();
 }
 
 
 void DumperBinary::dump_manual(int offset_h, int total_h) {
 
-  std::stringstream sfilename;
-
   int prank, psize;
   MPI_Comm_rank(m_communicator, &prank);
   MPI_Comm_size(m_communicator, &psize);
 
-  // sfilename << "out_binary_" << step << ".bmp";
-  sfilename << "out_" << "manual" << ".bmp";
+  // m_sfilename << "out_" << "manual" << ".bmp";
 
   int h = m_grid.nx();
   int w = m_grid.ny();
@@ -256,28 +243,22 @@ void DumperBinary::dump_manual(int offset_h, int total_h) {
   bmpinfoheader[22] = (filesize - 54) >> 16;
   bmpinfoheader[23] = (filesize - 54) >> 24;
 
-  MPI_File fh;
   MPI_Status status;
 
-  if (prank == TEST_RANK-1) std::cerr << "DUMP break 1" << std::endl;
-
-  if (prank == TEST_RANK-1) std::cerr << "DUMP " << h << " " << offset_h << " " << total_h << std::endl;
-
-  // opening a file in write and create mode
-  MPI_File_open(m_communicator, sfilename.str().c_str(),
-                MPI_MODE_WRONLY | MPI_MODE_CREATE,
-                MPI_INFO_NULL, &fh);
-
-  if (prank == TEST_RANK-1) std::cerr << "DUMP break 2" << std::endl;
+  // std::cerr << prank+1 << " FUCK-1" << std::endl;
+  // MPI_File_open(m_communicator, m_sfilename.str().c_str(),
+  //               MPI_MODE_WRONLY | MPI_MODE_CREATE,
+  //               MPI_INFO_NULL, &m_fh);
+  // std::cerr << prank+1 << " FUCK-2" << std::endl;
 
   // defining the size of the file
-  MPI_File_set_size(fh, filesize);
+  MPI_File_set_size(m_fh, filesize);
 
   // rank 0 writes the header
   // if (prank == 0) {
   if (!m_header_written) {
-    MPI_File_write_at(fh, 0, bmpfileheader.data(), 14, MPI_CHAR, &status);
-    MPI_File_write_at(fh, 14, bmpinfoheader.data(), 40, MPI_CHAR, &status);
+    MPI_File_write_at(m_fh, 0, bmpfileheader.data(), 14, MPI_CHAR, &status);
+    MPI_File_write_at(m_fh, 14, bmpinfoheader.data(), 40, MPI_CHAR, &status);
     m_header_written = true;
   }
 
@@ -285,14 +266,27 @@ void DumperBinary::dump_manual(int offset_h, int total_h) {
 
   // We also could write that data with a write_at, the view is just to show
   // different possibilities
-  MPI_File_set_view(fh, offset, MPI_CHAR, MPI_CHAR, "native", MPI_INFO_NULL);
+  MPI_File_set_view(m_fh, offset, MPI_CHAR, MPI_CHAR, "native", MPI_INFO_NULL);
 
-  MPI_File_write(fh, img.data(), img.size(), MPI_CHAR, &status);
-  MPI_File_close(&fh);
+  MPI_File_write(m_fh, img.data(), img.size(), MPI_CHAR, &status);
+  // MPI_File_close(&m_fh);
 }
 
-void DumperBinary::set_communicator(MPI_Comm new_comm) {
+void DumperBinary::set_mpi_communicator(MPI_Comm new_comm) {
   m_communicator = new_comm;
+}
+
+void DumperBinary::open_mpi_file() {
+  std::cerr << "FUCK 1" << std::endl;
+  // opening a file in write and create mode
+  MPI_File_open(m_communicator, m_sfilename.str().c_str(),
+                MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                MPI_INFO_NULL, &m_fh);
+  std::cerr << "FUCK 2" << std::endl;
+}
+
+void DumperBinary::close_mpi_file() {
+  MPI_File_close(&m_fh);
 }
 
 #endif

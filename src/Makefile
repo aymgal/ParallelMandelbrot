@@ -31,10 +31,10 @@ EXEC_OMP    = mandel_omp
 EXEC_MPI    = mandel_mpi
 
 all: clean $(EXEC_SERIAL) $(EXEC_OMP) $(EXEC_MPI)
-# all: clean $(EXEC_SERIAL) $(EXEC_OMP)
-# all: clean $(EXEC_SERIAL) $(EXEC_MPI)
-# all: clean $(EXEC_MPI)
-# all: clean $(EXEC_SERIAL)
+
+srl: clean $(EXEC_SERIAL)
+omp: clean $(EXEC_OMP)
+mpi: clean $(EXEC_MPI)
 
 CXX = g++-6
 

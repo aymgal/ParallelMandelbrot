@@ -1,6 +1,7 @@
 #ifndef MANDEL_HH
 #define MANDEL_HH
 
+#include <sstream>
 #include <vector>
 
 #include "gvars.hh"
@@ -75,11 +76,13 @@ private:
   // compute the complex recursive equation, returns value of the pixel
   dfloat solve_recursive(dfloat cx, dfloat cy, dfloat z0x, dfloat z0y);
 
+  // compute local sizes/offsets defining a row for the grid decomposition
   std::vector<int> get_row_def(int row_idx, int nx, int ny, int n_rows);
 
 #ifdef PARALLEL_MPI
   // proc rank
   int m_prank;
+
   // communicator size
   int m_psize;
 
@@ -88,16 +91,14 @@ private:
 
   // communicators
   MPI_Comm m_communicator;    // main communicator
-  MPI_Comm m_MW_communicator; // master/workers communicator
+  MPI_Comm m_MW_communicator; // (master) and (all workers) communicator
 
-  /* '_simple' : complex plane divided in equal psize rows */
-  void init_mpi_simple();      // to be called in constructor
+  // initialize local sizes so every proc compute a given row
+  void init_mpi_simple();
 
-  /* '_balance' : complex plane divided in a lot of rows, 
-   * then master ditribute rows to workers dynamically
-   */
-   void mpi_master();
-   void mpi_worker(bool output_img);
+  // for master/workers load balancing
+  void mpi_master();
+  void mpi_worker(bool output_img);
 
 #endif /* PARALLEL_MPI */
 

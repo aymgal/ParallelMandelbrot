@@ -62,10 +62,10 @@ int main(int argc, char *argv[]) {
 int N, n_max, n_rows;
 process_args(argc, argv, N, n_max, n_rows);
 
-#ifdef PARALLEL_OPENMP
+#if defined(VERBOSE) && defined(PARALLEL_OPENMP)
   std::cout << "Number of omp threads : " << omp_get_max_threads()
             << std::endl;
-#elif PARALLEL_MPI
+#elif defined(VERBOSE) && defined(PARALLEL_MPI)
   std::cout << "Rank of processor : " << prank << std::endl;
 #endif
 
