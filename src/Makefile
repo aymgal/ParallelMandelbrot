@@ -3,6 +3,7 @@
 ########## OPTIONS ##########
 
 OPTS += -DOUTPUT_IMAGE
+OPTS += -DOUTPUT_TIMINGS
 # OPTS += -DUSE_STDCOMPLEX
 # OPTS += -DUSE_DISTANCE_ESTIM
 # OPTS += -DCOLOR_ITERATIONS
@@ -12,16 +13,16 @@ OPTS += -DOUTPUT_IMAGE
 
 #-- !!! only one of these options at a time !!! --#
 # OPTS += -DMPI_SIMPLE
-# OPTS += -DMPI_MW_SIMPLE
-OPTS += -DMPI_MW_BALANCE
+OPTS += -DMPI_MASTER_WORKERS
 
 
 #-- for debugging --#
 OPTS += -DCOLOR_PRANK
 # OPTS += -DVERBOSE
 
-# DEBUG = -pg -g
 DEBUG = -g
+
+# PROF = -pg
 
 #############################
 
@@ -29,10 +30,10 @@ EXEC_SERIAL = mandel_srl
 EXEC_OMP    = mandel_omp
 EXEC_MPI    = mandel_mpi
 
-# all: clean $(EXEC_SERIAL) $(EXEC_OMP) $(EXEC_MPI)
+all: clean $(EXEC_SERIAL) $(EXEC_OMP) $(EXEC_MPI)
 # all: clean $(EXEC_SERIAL) $(EXEC_OMP)
 # all: clean $(EXEC_SERIAL) $(EXEC_MPI)
-all: clean $(EXEC_MPI)
+# all: clean $(EXEC_MPI)
 # all: clean $(EXEC_SERIAL)
 
 CXX = g++-6
@@ -44,12 +45,13 @@ endif
 LD = $(CXX)
 OPTIMIZE = -Wall -Wextra -Werror -pedantic -std=c++11 -O3
 
-CXXFLAGS = $(OPTIMIZE) $(DEBUG) $(OPTS)
+CXXFLAGS = $(OPTIMIZE) $(DEBUG) $(PROF) $(OPTS)
 LDFLAGS  = -lm $(CXXFLAGS)
 
-OBJS = main.o mandelbrot.o buffer.o grid.o dumpers.o
-OBJS_OMP = main_omp.o mandelbrot_omp.o buffer.o grid.o dumpers.o
-OBJS_MPI = main_mpi.o mandelbrot_mpi.o buffer_mpi.o grid_mpi.o dumpers_mpi.o
+OBJS     = main.o mandelbrot.o buffer.o grid.o dumpers.o utils.o
+OBJS_OMP = main_omp.o mandelbrot_omp.o buffer.o grid.o dumpers.o utils.o
+OBJS_MPI = main_mpi.o mandelbrot_mpi.o buffer_mpi.o grid_mpi.o dumpers_mpi.o \
+		   utils_mpi.o
 
 #*** compilation of serial exec ***#
 $(EXEC_SERIAL) : CXXFLAGS += -ftree-vectorize
@@ -88,6 +90,9 @@ grid_mpi.o: grid.cc grid.hh
 	$(LD) $< $(CXXFLAGS) -c -o $@ 
 
 dumpers_mpi.o: dumpers.cc dumpers.hh
+	$(LD) $< $(CXXFLAGS) -c -o $@
+
+utils_mpi.o: utils.cc utils.hh
 	$(LD) $< $(CXXFLAGS) -c -o $@
 #**********************************#
 

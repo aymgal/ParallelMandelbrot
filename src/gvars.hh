@@ -14,6 +14,8 @@ typedef std::chrono::duration<double> second;
 #define YMIN -1.5
 #define YMAX  1.5
 
+#define TEST_RANK 1
+
 #ifdef DOUBLE_PRECISION
 typedef double dfloat;
 #else

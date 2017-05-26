@@ -1,6 +1,8 @@
 #ifndef MANDEL_HH
 #define MANDEL_HH
 
+#include <vector>
+
 #include "gvars.hh"
 #include "buffer.hh"
 #include "dumpers.hh"
@@ -15,19 +17,15 @@ public:
   Mandelbrot(int nx, int ny, 
              dfloat x_min, dfloat x_max, 
              dfloat y_min, dfloat y_max,
-             int n_iter, MPI_Comm comm);
+             int n_iter, int n_rows, MPI_Comm comm);
 #else
   Mandelbrot(int nx, int ny, 
-           dfloat x_min, dfloat x_max, 
-           dfloat y_min, dfloat y_max,
-           int n_iter);
+             dfloat x_min, dfloat x_max, 
+             dfloat y_min, dfloat y_max,
+             int n_iter);
 #endif
 
-  void compute_set();
-
-  void write_image(int arg1, int arg2);
-
-  void do_all_balance();
+  void run(bool output_img);
 
 private:
   // global size of the problem
@@ -41,8 +39,12 @@ private:
   // grid storage
   Buffer m_mandel_set;
 
+#ifdef PARALLEL_MPI
   // dumper to use for outputs
-  std::unique_ptr<Dumper> m_pdumper;
+  std::unique_ptr<DumperBinary> m_pdumper;
+#else
+  std::unique_ptr<DumperASCII> m_pdumper;
+#endif
 
   // threshold squared modulus
   dfloat m_mod_z2_th;
@@ -64,36 +66,40 @@ private:
   // local offset
   int m_local_offset_x, m_local_offset_y;
 
+  // compute the Mandelbrot set
+  void compute_set();
+
+  // assign value to pixel in the grid
+  void compute_pix(int ix, int iy);
+
+  // compute the complex recursive equation, returns value of the pixel
+  dfloat solve_recursive(dfloat cx, dfloat cy, dfloat z0x, dfloat z0y);
+
+  std::vector<int> get_row_def(int row_idx, int nx, int ny, int n_rows);
 
 #ifdef PARALLEL_MPI
-
   // proc rank
   int m_prank;
   // communicator size
   int m_psize;
 
+  // number of rows to divide complex grid
+  int m_n_rows;
+
   // communicators
   MPI_Comm m_communicator;    // main communicator
   MPI_Comm m_MW_communicator; // master/workers communicator
 
-  /* '_simple' : space divided in equal psize rows */
-  void init_allworkers_simple();
-  void init_master_workers_simple();
+  /* '_simple' : complex plane divided in equal psize rows */
+  void init_mpi_simple();      // to be called in constructor
 
-  /* '_balance' : space divided in a lot of rows, 
+  /* '_balance' : complex plane divided in a lot of rows, 
    * then master ditribute rows to workers dynamically
    */
-   // void master_balance();
-   // void worker_balance();
-  // void init_master_workers_balance();
-
-  /* for workers, to compute then write */
-  // void compute_and_write();
+   void mpi_master();
+   void mpi_worker(bool output_img);
 
 #endif /* PARALLEL_MPI */
-
-  void compute_pix(int ix, int iy);
-  dfloat iterate_on_pix(dfloat cx, dfloat cy, dfloat z0x, dfloat z0y);
 
 };
 

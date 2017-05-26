@@ -12,9 +12,43 @@
 
 
 static void usage(const std::string & prog_name) {
+#ifdef PARALLEL_MPI
+  std::cerr << prog_name << " <grid_size> <n_iter_max> <n_rows>" << std::endl;
+#else
   std::cerr << prog_name << " <grid_size> <n_iter_max>" << std::endl;
+#endif
   exit(0);
 }
+
+static void process_args(int argc, char *argv[], 
+                         int& var1, int& var2, int& var3) {
+  if (argc < 3)
+    usage(argv[0]);
+
+  std::stringstream arg1(argv[1]);
+  std::stringstream arg2(argv[2]);
+  arg1 >> var1;
+  arg2 >> var2;
+
+  if ( (arg1.fail()) || (arg2.fail()) )
+    usage(argv[0]);
+
+#ifdef PARALLEL_MPI
+  if (argc != 4)
+    usage(argv[0]);
+
+  std::stringstream arg3(argv[3]);
+  arg3 >> var3;
+
+  if (arg3.fail())
+    usage(argv[0]);
+
+#else
+  var3 = -1; // whatever we want, won't be used in non-MPI code
+#endif 
+
+}
+
 
 int main(int argc, char *argv[]) {
 
@@ -25,15 +59,8 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &psize);
 #endif
 
-  if (argc != 3) usage(argv[0]);
-
-  std::stringstream arg1(argv[1]);
-  std::stringstream arg2(argv[2]);
-  int N, n_max; // main two variables of the problem
-  arg1 >> N;
-  arg2 >> n_max;
-
-  if ((arg1.fail()) || (arg2.fail())) usage(argv[0]);
+int N, n_max, n_rows;
+process_args(argc, argv, N, n_max, n_rows);
 
 #ifdef PARALLEL_OPENMP
   std::cout << "Number of omp threads : " << omp_get_max_threads()
@@ -44,65 +71,19 @@ int main(int argc, char *argv[]) {
 
 /* initialization of a mandelbrodt instance */
 #ifdef PARALLEL_MPI
-  Mandelbrot mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max, MPI_COMM_WORLD);
+  Mandelbrot mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max, n_rows,
+                    MPI_COMM_WORLD);
 #else
   Mandelbrot mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max);
 #endif
 
-/* start timings */
-#ifdef PARALLEL_MPI
-  MPI_Barrier(MPI_COMM_WORLD);
-  auto mpi_start_c = MPI_Wtime();
-#endif
-  auto start_c = clk::now();
-
 /* compute Mandelbrot set */
-#ifdef MPI_MW_BALANCE
-  mandel.do_all_balance();
+#ifdef OUTPUT_IMAGE
+  mandel.run(true);
 #else
-  mandel.compute_set();
+  mandel.run(false);
 #endif
 /* ---------------------- */
-
-/* end timings */
-  auto end_c = clk::now();
-#ifdef PARALLEL_MPI
-  MPI_Barrier(MPI_COMM_WORLD);
-  auto mpi_end_c = MPI_Wtime();
-#endif
-
-  second time_compute = end_c - start_c;
-  std::cout << "Time to compute set : ";
-#ifdef PARALLEL_MPI
-  std::cout << prank << " " << N << " " << time_compute.count() << std::endl;
-#else
-  std::cout << N << " " << time_compute.count() << std::endl;
-#endif
-
-#ifdef PARALLEL_MPI
-  if (prank == 0) 
-    std::cout << "MPI time to compute " << mpi_end_c-mpi_start_c << std::endl; 
-#endif
-
-#if defined(OUTPUT_IMAGE) && !defined(MPI_MW_BALANCE)
-
-  auto start_w = clk::now();
-
-/* output Mandelbrot set as an image */
-  mandel.write_image(0);
-/* --------------------------------- */
-
-  auto end_w = clk::now();
-
-  second time_write = end_w - start_w;
-  std::cout << "Time to write image : ";
-#ifdef PARALLEL_MPI
-  std::cout << prank << " " << N << " " << time_write.count() << std::endl;
-#else
-  std::cout << N << " " << time_write.count() << std::endl;
-#endif
-
-#endif
 
 #ifdef PARALLEL_MPI
   MPI_Finalize();
@@ -110,3 +91,5 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
+
+

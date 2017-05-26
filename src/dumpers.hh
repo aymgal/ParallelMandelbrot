@@ -25,10 +25,6 @@ public:
   float min() const;
   float max() const;
 
-#if PARALLEL_MPI
-  virtual void set_communicator(MPI_Comm new_comm) = 0;
-#endif
-
 protected:
   const Grid & m_grid;
   float m_min, m_max;
@@ -55,11 +51,18 @@ public:
 class DumperBinary : public Dumper {
 public:
   explicit DumperBinary(const Grid & grid, MPI_Comm comm)
-      : Dumper(grid, comm) {}
+      : Dumper(grid, comm) {
+    m_header_written = false;
+  }
 
   virtual void dump(int arg1, int arg2);
 
-  virtual void set_communicator(MPI_Comm new_comm);
+  void dump_manual(int offset_h, int total_h);
+
+  void set_communicator(MPI_Comm new_comm);
+
+private:
+  bool m_header_written;
 };
 #endif
 
