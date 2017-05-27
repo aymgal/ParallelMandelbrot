@@ -44,14 +44,18 @@ private:
   // grid storage
   Buffer m_mandel_set;
 
-  // dumper to use for outputs
+  // dumper for image output
+  // timer for timings output
 #ifdef PARALLEL_MPI
   std::unique_ptr<DumperBinary> m_pdumper;
-  TimerMPI m_timer;
+  // TimerMPI m_timer;
 #else
   std::unique_ptr<DumperASCII> m_pdumper;
-  TimerSTD m_timer;
+  // TimerSTD m_timer;
 #endif
+
+  // TMP
+  std::unique_ptr<Timer> m_timer;
 
   // threshold squared modulus
   dfloat m_mod_z2_th;
@@ -87,7 +91,6 @@ private:
 
   void init_dumper_colors();
   
-  void cout_timing(seconds timing) const;
   void cout_timing(double timing) const;
 
 #ifdef PARALLEL_MPI

@@ -48,10 +48,12 @@ OPTIMIZE = -Wall -Wextra -Werror -pedantic -std=c++11 -O3
 CXXFLAGS = $(OPTIMIZE) $(DEBUG) $(PROF) $(OPTS)
 LDFLAGS  = -lm $(CXXFLAGS)
 
-OBJS     = main.o mandelbrot.o buffer.o grid.o dumpers.o utils.o
-OBJS_OMP = main_omp.o mandelbrot_omp.o buffer.o grid.o dumpers.o utils.o
+OBJS     = main.o mandelbrot.o buffer.o grid.o dumpers.o \
+		   utils.o timers.o
+OBJS_OMP = main_omp.o mandelbrot_omp.o buffer.o grid.o dumpers.o \
+		   utils.o timers.o
 OBJS_MPI = main_mpi.o mandelbrot_mpi.o buffer_mpi.o grid_mpi.o dumpers_mpi.o \
-		   utils_mpi.o
+		   utils_mpi.o timers_mpi.o
 
 #*** compilation of serial exec ***#
 $(EXEC_SERIAL) : CXXFLAGS += -ftree-vectorize
@@ -93,6 +95,9 @@ dumpers_mpi.o: dumpers.cc dumpers.hh
 	$(LD) $< $(CXXFLAGS) -c -o $@
 
 utils_mpi.o: utils.cc utils.hh
+	$(LD) $< $(CXXFLAGS) -c -o $@
+
+timers_mpi.o: timers.cc timers.hh
 	$(LD) $< $(CXXFLAGS) -c -o $@
 #**********************************#
 

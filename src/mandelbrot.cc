@@ -28,7 +28,7 @@ MandelbrotSet::MandelbrotSet(int nx, int ny,
       m_global_ymin(y_min), m_global_ymax(y_max),
       m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
       m_pdumper(new DumperBinary(m_mandel_set.storage(), comm)), 
-      m_timer(comm), m_n_rows(n_rows), m_communicator(comm)
+      m_timer(new TimerMPI(comm)), m_n_rows(n_rows), m_communicator(comm)
 #else
 MandelbrotSet::MandelbrotSet(int nx, int ny, 
                              dfloat x_min, dfloat x_max, 
@@ -38,7 +38,8 @@ MandelbrotSet::MandelbrotSet(int nx, int ny,
       m_global_xmin(x_min), m_global_xmax(x_max), 
       m_global_ymin(y_min), m_global_ymax(y_max),
       m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
-      m_pdumper(new DumperASCII(m_mandel_set.storage()))
+      m_pdumper(new DumperASCII(m_mandel_set.storage())),
+      m_timer(new TimerSTD(comm))
 #endif
 {
   m_mod_z2_th = 4.0;
@@ -79,7 +80,6 @@ MandelbrotSet::MandelbrotSet(int nx, int ny,
 }
 
 
-
 /* --------------------------------- RUN ----------------------------------- */
 
 /* only public method */
@@ -87,27 +87,27 @@ void MandelbrotSet::run() {
 
 /* master/workers MPI */
 #if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
-  m_timer.start_chrono();
+  m_timer->start_chrono();
 
   /* computation */
   if (m_prank == 0)      mpi_master(); // master
   else if (m_prank != 0) mpi_worker(); // workers
 
-  m_timer.end_chrono();
+  m_timer->end_chrono();
 #ifdef OUTPUT_TIMINGS
-  if (m_prank == 0) cout_timing(m_timer.get_timing());
+  if (m_prank == 0) cout_timing(m_timer->get_timing());
 #endif
 
 /* simple MPI */
 #elif defined(PARALLEL_MPI) && defined(MPI_SIMPLE)
-  m_timer.start_chrono();
+  m_timer->start_chrono();
 
   /* computation */
   compute_set();
 
-  m_timer.end_chrono();
+  m_timer->end_chrono();
 #ifdef OUTPUT_TIMINGS
-  if (m_prank == 0) cout_timing(m_timer.get_timing());
+  if (m_prank == 0) cout_timing(m_timer->get_timing());
 #endif
 
   if (m_output_img) {
@@ -116,16 +116,15 @@ void MandelbrotSet::run() {
 
 /* serial or OpenMP-only */
 #else
-  m_timer.start_chrono();
+  m_timer->start_chrono();
 
   /* computation */
   compute_set();
 
-  m_timer.end_chrono();
+  m_timer->end_chrono();
 #ifdef OUTPUT_TIMINGS
-  if (m_prank == 0) cout_timing(m_timer.get_timing());
+  cout_timing(m_timer->get_timing());
 #endif
-
 
   if (m_output_img) {
     m_pdumper->dump(0, 0);
@@ -339,9 +338,9 @@ void MandelbrotSet::init_dumper_colors() {
 #endif
 }
 
-void MandelbrotSet::cout_timing(seconds timing) const {
-  std::cout << m_global_nx << " " << timing.count() << std::endl;
-}
+// void MandelbrotSet::cout_timing(seconds timing) const {
+//   std::cout << m_global_nx << " " << timing.count() << std::endl;
+// }
 
 void MandelbrotSet::cout_timing(double timing) const {
   std::cout << m_global_nx << " " << timing << std::endl;
