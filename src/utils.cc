@@ -1,8 +1,12 @@
 #include <algorithm> // std::all_of
 #include <iostream>
 #include <numeric>   // std::accumulate
+#ifdef PARALLEL_MPI
+#include <mpi.h>
+#endif
 
 #include "utils.hh"
+#include "gvars.hh"
 
 // some utility functions
 

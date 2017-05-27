@@ -18,7 +18,7 @@ OPTS += -DMPI_MASTER_WORKERS
 
 #-- for debugging --#
 OPTS += -DCOLOR_PRANK
-OPTS += -DVERBOSE
+# OPTS += -DVERBOSE
 
 DEBUG = -g
 

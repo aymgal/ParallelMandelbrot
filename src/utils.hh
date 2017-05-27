@@ -1,4 +1,7 @@
 #include <vector>
+#ifdef PARALLEL_MPI
+#include <mpi.h>
+#endif
 
 // some utility functions
 

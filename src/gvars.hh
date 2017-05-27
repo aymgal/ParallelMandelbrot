@@ -17,7 +17,8 @@ typedef double dfloat;
 typedef float dfloat;
 #endif
 
+typedef std::chrono::high_resolution_clock::time_point tp_type;
 typedef std::chrono::high_resolution_clock clk;
-typedef std::chrono::duration<double> second;
+typedef std::chrono::duration<double> seconds;
 
 #endif /* GVARS_HH */

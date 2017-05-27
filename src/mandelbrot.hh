@@ -3,14 +3,14 @@
 
 #include <sstream>
 #include <vector>
-
-#include "gvars.hh"
-#include "buffer.hh"
-#include "dumpers.hh"
-
 #ifdef PARALLEL_MPI
 #include <mpi.h>
 #endif
+
+#include "buffer.hh"
+#include "dumpers.hh"
+#include "gvars.hh"
+#include "timers.hh"
 
 class MandelbrotSet {
 public:
@@ -47,8 +47,10 @@ private:
   // dumper to use for outputs
 #ifdef PARALLEL_MPI
   std::unique_ptr<DumperBinary> m_pdumper;
+  TimerMPI m_timer;
 #else
   std::unique_ptr<DumperASCII> m_pdumper;
+  TimerSTD m_timer;
 #endif
 
   // threshold squared modulus
@@ -84,6 +86,9 @@ private:
   std::vector<int> get_row_def(int row_idx, int nx, int ny, int n_rows);
 
   void init_dumper_colors();
+  
+  void cout_timing(seconds timing) const;
+  void cout_timing(double timing) const;
 
 #ifdef PARALLEL_MPI
   // proc rank
