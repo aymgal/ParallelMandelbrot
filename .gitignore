@@ -2,6 +2,9 @@
 src/.DS_Store
 src/*.o
 src/*.dSYM
+src/*.pgm
+src/*.bmp
 src/mandel_srl
 src/mandel_omp
 src/mandel_mpi
+analysis/*.dat
