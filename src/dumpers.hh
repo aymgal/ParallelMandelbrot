@@ -62,15 +62,12 @@ public:
 
   virtual void dump(int arg1, int arg2);
 
-  void dump_manual(int offset_h, int total_h);
+  void dump_manual_offset(int offset_h, int total_h);
 
   void set_mpi_communicator(MPI_Comm new_comm);
-  void open_mpi_file();
-  void close_mpi_file();
 
 private:
   bool m_header_written;
-  MPI_File m_fh;
 };
 #endif
 

@@ -11,34 +11,33 @@
 
 
 #ifdef MPI_MASTER_WORKERS
-#define FIRST_WORK_TAG 4
-#define WORK_TAG       3
-#define FEEBACK_TAG    2
-#define END_TAG        1
-#define LAST_END_TAG   0
+#define WORK_TAG    2
+#define FEEBACK_TAG 1
+#define END_TAG     0
 #endif
 
 
 #if PARALLEL_MPI
-Mandelbrot::Mandelbrot(int nx, int ny, 
-                       dfloat x_min, dfloat x_max, 
-                       dfloat y_min, dfloat y_max,
-                       int n_iter, int n_rows, MPI_Comm comm)
+MandelbrotSet::MandelbrotSet(int nx, int ny, 
+                             dfloat x_min, dfloat x_max, 
+                             dfloat y_min, dfloat y_max,
+                             int n_iter, bool output_img, 
+                             int n_rows, MPI_Comm comm)
     : m_global_nx(nx), m_global_ny(ny), 
       m_global_xmin(x_min), m_global_xmax(x_max), 
       m_global_ymin(y_min), m_global_ymax(y_max),
-      m_max_iter(n_iter), m_mandel_set(nx, ny),
+      m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
       m_pdumper(new DumperBinary(m_mandel_set.storage(), comm)),
       m_n_rows(n_rows), m_communicator(comm)
 #else
-Mandelbrot::Mandelbrot(int nx, int ny, 
-                       dfloat x_min, dfloat x_max, 
-                       dfloat y_min, dfloat y_max,
-                       int n_iter)
+MandelbrotSet::MandelbrotSet(int nx, int ny, 
+                             dfloat x_min, dfloat x_max, 
+                             dfloat y_min, dfloat y_max,
+                             int n_iter, bool output_img)
     : m_global_nx(nx), m_global_ny(ny), 
       m_global_xmin(x_min), m_global_xmax(x_max), 
       m_global_ymin(y_min), m_global_ymax(y_max),
-      m_max_iter(n_iter), m_mandel_set(nx, ny),
+      m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
       m_pdumper(new DumperASCII(m_mandel_set.storage()))
 #endif
 {
@@ -61,10 +60,12 @@ Mandelbrot::Mandelbrot(int nx, int ny,
 #if defined(MPI_SIMPLE)
   init_mpi_simple();
 #elif defined(MPI_MASTER_WORKERS)
-  {};
+  init_writers(0); // because master is rank 0 (do not write output image)
 #else
 #error "MACRO 'MPI_' UNDEFINED"
 #endif
+
+  
 
 #else
   // if non-MPI code, LOCAL and GLOBAL variables are the same
@@ -74,15 +75,15 @@ Mandelbrot::Mandelbrot(int nx, int ny,
   m_local_offset_x = m_local_offset_y = 0;
 #endif
 
+  if (m_output_img) {
+    init_dumper_colors();
+  }
 }
 
-
-void Mandelbrot::run(bool output_img) {
+/* only public method */
+void MandelbrotSet::run() {
 
 #if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
-  // create new communicators for (master alone) and (all workers)
-  int color = (m_prank == 0 ? 0 : 1);
-  MPI_Comm_split(m_communicator, color, m_prank, &m_MW_communicator);
 
   /*** MPI master ***/
   if (m_prank == 0) {
@@ -90,7 +91,7 @@ void Mandelbrot::run(bool output_img) {
   }
   /*** MPI worker ***/
   else if (m_prank != 0) {
-    mpi_worker(output_img);
+    mpi_worker();
   }
 
 #elif defined(PARALLEL_MPI) && defined(MPI_SIMPLE)
@@ -104,8 +105,10 @@ void Mandelbrot::run(bool output_img) {
 
 #ifdef OUTPUT_TIMINGS
   auto end = MPI_Wtime();
+  auto compute_time = end-start;
+  // so that only one rank prints out timings
   if (m_prank == 0) {
-    std::cout << m_global_nx << " " << end-start << std::endl;
+    std::cout << m_global_nx << " " << compute_time << std::endl;
   }
 #endif
 
@@ -135,177 +138,8 @@ void Mandelbrot::run(bool output_img) {
 }
 
 
-#ifdef PARALLEL_MPI
-void Mandelbrot::init_mpi_simple() {
 
-  std::vector<int> locals = get_row_def(m_prank, 
-                                        m_global_nx, m_global_ny, m_psize);
-
-  // divide the grid on m_psize rows of height m_local_nx
-  m_local_nx = locals[0];
-  m_local_ny = locals[1];
-  // offsets
-  m_local_offset_x = locals[2];
-  m_local_offset_y = locals[3];
-
-#ifdef VERBOSE
-  std::cerr << m_prank << " " 
-            << m_global_nx << " " << m_global_ny << " " 
-            << m_local_nx << " " << m_local_ny << " " 
-            << m_local_offset_x << " " << m_local_offset_y << std::endl;
-#endif
-
-  // resizing the grid
-  m_mandel_set.resize(m_local_nx, m_local_ny);
-}
-
-void Mandelbrot::mpi_master() {
-  int w_prank; // worker prank
-  // int row_count;
-  int row_idx, n_busy;
-  MPI_Status status;
-  int w_feeback = 1;
-
-  // number of workers
-  int n_workers = m_psize - 1;
-
-  // define a buffer for local sizes
-  std::vector<int> buf_locals(4);
-
-  if (n_workers > m_n_rows)
-    throw std::invalid_argument("Too much workers processors !");
-
-  std::cerr << "> " << n_workers << " workers" << std::endl;
-
-  /* compute local sizes for each worker + put them in lists to send */
-  // initial sendings
-  n_busy = 0;
-  row_idx = 0;
-  for (w_prank = 1; w_prank <= n_workers; w_prank++) {
-    // get corresponding local sizes
-    buf_locals = get_row_def(row_idx, m_global_nx, m_global_ny, m_n_rows);
-
-    // and send them to worker
-    int work_tag = (w_prank == 1 ? FIRST_WORK_TAG : WORK_TAG);
-    MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, work_tag, m_communicator);
-
-    n_busy++;
-  }
-
-  int next_row_idx = n_workers;
-
-  /* 'infinite' loop to feed workers with new rows */
-  for (;;) {
-
-    MPI_Recv(&w_feeback, 1, MPI_INT, 
-             MPI_ANY_SOURCE, FEEBACK_TAG, m_communicator, &status);
-    w_prank = status.MPI_SOURCE;
-
-    std::cerr << "--> next row index = " << next_row_idx << std::endl;
-
-    /* send new work */
-    if (next_row_idx < m_n_rows) {
-
-      // get corresponding local sizes
-      buf_locals = get_row_def(next_row_idx, m_global_nx, m_global_ny, m_n_rows);
-      // and send them to worker
-      MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, WORK_TAG, m_communicator);
-
-      if (m_prank == TEST_RANK) std::cerr << "Send buf_locals" << std::endl;
-
-      next_row_idx++;
-    }
-
-    /* or tell to quit */
-    else {
-      int end_tag = (n_busy == 1 ? LAST_END_TAG : END_TAG);
-      MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, end_tag, m_communicator);
-      std::cerr << "Send END_TAG to rank " << w_prank << std::endl;
-      n_busy--;
-    }
-
-    std::cerr << "n_busy " << n_busy << std::endl;
-
-    if (n_busy == 0) {
-      std::cerr << "ALL BUSY WORKERS ARE NOTIFIED," << std::endl;
-      break; // when no more busy workers
-    }
-
-  } /* end infinite loop */
-}
-
-void Mandelbrot::mpi_worker(bool output_img) {
-  MPI_Status status;
-  int w_feeback = 1;
-
-  // define a buffer for local sizes
-  std::vector<int> buf_locals(4);
-
-  // set the dumper communicator so that only workers can write the image
-  m_pdumper->set_mpi_communicator(m_MW_communicator);
-
-  MPI_Barrier(m_MW_communicator);
-
-  /* infinite loop */
-  for (;;) {
-    // receive buffer from master containing local problem sizes
-    MPI_Recv(&buf_locals[0], 4, MPI_INT, 
-             0, MPI_ANY_TAG, m_communicator, &status);
-
-    if (status.MPI_TAG == FIRST_WORK_TAG) {
-      std::cerr << m_prank << " first tag !" << std::endl;
-      m_pdumper->open_mpi_file();
-    }
-    else if (status.MPI_TAG == LAST_END_TAG) {
-      std::cerr << m_prank << " last tag !" << std::endl;
-      m_pdumper->close_mpi_file();
-    }
-
-    if ((status.MPI_TAG == LAST_END_TAG) || (status.MPI_TAG == END_TAG)) {
-      std::cerr << m_prank << " order to quit ..." << std::endl;
-      MPI_Barrier(m_MW_communicator);
-      std::cerr << "... byebye rank " << m_prank << std::endl;
-      break;
-    }
-
-    if (m_prank == TEST_RANK) std::cerr << "Recv buf_locals" << std::endl;
-
-    // unpack variables and update member variables
-    m_local_nx       = buf_locals[0];
-    m_local_ny       = buf_locals[1];
-    m_local_offset_x = buf_locals[2];
-    m_local_offset_y = buf_locals[3];
-
-#ifdef VERBOSE
-    std::cerr << m_prank << " " 
-              << m_global_nx << " " << m_global_ny << " "
-              << m_local_nx << " " << m_local_ny << " " 
-              << m_local_offset_x << " " << m_local_offset_y << std::endl;
-#endif
-
-    // resizing the grid
-    m_mandel_set.resize(m_local_nx, m_local_ny);
-
-    /* compute the set and write corresponding part in image file */
-    compute_set();
-
-    if (output_img) {
-      m_pdumper->dump_manual(m_local_offset_x, m_global_nx);
-    }
-
-    /* finally send message to tell master that worker is ready for new work */
-    MPI_Send(&w_feeback, 1, MPI_INT, 0, FEEBACK_TAG, m_communicator);
-
-    if (m_prank == TEST_RANK) std::cerr << "Send w_feeback" << std::endl;
-
-  } /* end infinite loop */
-
-}
-
-#endif /* PARALLEL_MPI */
-
-
-void Mandelbrot::compute_set() {
+void MandelbrotSet::compute_set() {
   int ix, iy;
 
   /* OpenMP parallelization is set here */
@@ -323,7 +157,7 @@ void Mandelbrot::compute_set() {
   }
 }
 
-void Mandelbrot::compute_pix(int ix, int iy) {
+void MandelbrotSet::compute_pix(int ix, int iy) {
   dfloat cx, cy;
   dfloat z0x, z0y;
 
@@ -339,7 +173,7 @@ void Mandelbrot::compute_pix(int ix, int iy) {
   mset(ix, iy) = solve_recursive(cx, cy, z0x, z0y);
 }
 
-dfloat Mandelbrot::solve_recursive(dfloat cx, dfloat cy, 
+dfloat MandelbrotSet::solve_recursive(dfloat cx, dfloat cy, 
                                    dfloat z0x, dfloat z0y) {
   int iter;
   dfloat zx, zy;
@@ -468,8 +302,10 @@ dfloat Mandelbrot::solve_recursive(dfloat cx, dfloat cy,
   else {
 #ifdef COLOR_ITERATIONS
     pix_value = (dfloat) iter;
-#elif defined(COLOR_PRANK) && defined(PARALLEL_MPI)
-    pix_value = m_prank + 1;
+
+#elif defined(PARALLEL_MPI) && defined(COLOR_PRANK)
+    pix_value = m_prank;
+
 #else
     pix_value = m_value_outside;
 #endif
@@ -479,7 +315,7 @@ dfloat Mandelbrot::solve_recursive(dfloat cx, dfloat cy,
 }
 
 
-std::vector<int> Mandelbrot::get_row_def(int row_idx, int nx, int ny, 
+std::vector<int> MandelbrotSet::get_row_def(int row_idx, int nx, int ny, 
                                          int n_rows) {
   std::vector<int> sizes(4);
 
@@ -495,4 +331,166 @@ std::vector<int> Mandelbrot::get_row_def(int row_idx, int nx, int ny,
   sizes[3] = row_offset_y;
   return sizes;
 }
+
+
+void MandelbrotSet::init_dumper_colors() {
+  m_pdumper->set_min(m_value_inside);
+#if defined(PARALLEL_MPI) && defined(COLOR_PRANK)
+  m_pdumper->set_max(m_psize-1); // set max color value to number of workers
+#else
+  m_pdumper->set_max(m_value_outside);
+#endif
+}
+
+/* everything below is MPI-related methods */
+
+#ifdef PARALLEL_MPI
+
+void MandelbrotSet::init_mpi_simple() {
+  m_n_rows = m_psize;
+  std::vector<int> locals = get_row_def(m_prank, 
+                                        m_global_nx, m_global_ny, m_n_rows);
+
+  // divide the grid on m_psize rows of height m_local_nx
+  m_local_nx = locals[0];
+  m_local_ny = locals[1];
+  // offsets
+  m_local_offset_x = locals[2];
+  m_local_offset_y = locals[3];
+
+#ifdef VERBOSE
+  std::cerr << m_prank << " " 
+            << m_global_nx << " " << m_global_ny << " " 
+            << m_local_nx << " " << m_local_ny << " " 
+            << m_local_offset_x << " " << m_local_offset_y << std::endl;
+#endif
+
+  // resizing the grid
+  m_mandel_set.resize(m_local_nx, m_local_ny);
+}
+
+void MandelbrotSet::init_writers(int prank_nonwriter) {
+  // create a new communicator for each worker alone
+  int color = m_prank; // so the color is unique
+  MPI_Comm_split(m_communicator, color, m_prank, &m_MW_communicator);
+
+  if (m_prank != prank_nonwriter) {
+    // set the dumper communicator to that new worker communicator
+    m_pdumper->set_mpi_communicator(m_MW_communicator);
+  }
+}
+
+void MandelbrotSet::mpi_master() {
+  int w_prank; // worker prank
+  int row_idx; // index of next row to compute
+  int n_busy;  // number of currently busy workers
+  MPI_Status status;
+
+  // number of workers
+  int n_workers = m_psize - 1;
+
+  // define a buffer for local sizes
+  std::vector<int> buf_locals(4);
+
+  if (n_workers > m_n_rows)
+    throw std::invalid_argument("Too much workers processors !");
+
+#ifdef VERBOSE
+  std::cerr << "> " << n_workers << " workers" << std::endl;
+#endif
+
+  /* compute local sizes for each worker + put them in lists to send */
+  // initial sendings
+  n_busy  = 0;
+  row_idx = 0;
+  for (w_prank = 1; w_prank <= n_workers; w_prank++) {
+    // get corresponding local sizes
+    buf_locals = get_row_def(row_idx, m_global_nx, m_global_ny, m_n_rows);
+
+    // and send them to worker
+    MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, WORK_TAG, m_communicator);
+    n_busy++;
+    row_idx++;
+  }
+
+  /* 'infinite' loop to feed workers with new rows */
+  int w_feeback = 1;
+  for (;;) {
+
+    MPI_Recv(&w_feeback, 1, MPI_INT, 
+             MPI_ANY_SOURCE, FEEBACK_TAG, m_communicator, &status);
+    w_prank = status.MPI_SOURCE;
+
+    /* send new work */
+    if (row_idx < m_n_rows) {
+
+      // get corresponding local sizes
+      buf_locals = get_row_def(row_idx, m_global_nx, m_global_ny, m_n_rows);
+      // and send them to worker
+      MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, WORK_TAG, m_communicator);
+
+      row_idx++;
+    }
+
+    /* or tell to quit */
+    else {
+      MPI_Send(&buf_locals[0], 4, MPI_INT, w_prank, END_TAG, m_communicator);
+      n_busy--;
+    }
+
+    if (n_busy == 0) {
+      break; // when no more busy workers
+    }
+
+  } /* end infinite loop */
+}
+
+void MandelbrotSet::mpi_worker() {
+  int w_feeback = 1;
+  MPI_Status status;
+
+  // define a buffer for local sizes
+  std::vector<int> buf_locals(4);
+
+  /* infinite loop */
+  for (;;) {
+    // receive buffer from master containing local problem sizes
+    MPI_Recv(&buf_locals[0], 4, MPI_INT, 
+             0, MPI_ANY_TAG, m_communicator, &status);
+
+    if (status.MPI_TAG == END_TAG) {
+      break;
+    }
+
+    // unpack variables and update member variables
+    m_local_nx       = buf_locals[0];
+    m_local_ny       = buf_locals[1];
+    m_local_offset_x = buf_locals[2];
+    m_local_offset_y = buf_locals[3];
+
+#ifdef VERBOSE
+    std::cerr << m_prank << " " 
+              << m_global_nx << " " << m_global_ny << " "
+              << m_local_nx << " " << m_local_ny << " " 
+              << m_local_offset_x << " " << m_local_offset_y << std::endl;
+#endif
+
+    // resizing the grid
+    m_mandel_set.resize(m_local_nx, m_local_ny);
+
+    /* compute the set and write corresponding part in image file */
+    compute_set();
+
+    if (m_output_img) {
+      m_pdumper->dump_manual_offset(m_local_offset_x, m_global_nx);
+    }
+
+    /* finally send message to tell master that worker is ready for new work */
+    MPI_Send(&w_feeback, 1, MPI_INT, 0, FEEBACK_TAG, m_communicator);
+
+  } /* end infinite loop */
+
+}
+
+#endif /* PARALLEL_MPI */
 

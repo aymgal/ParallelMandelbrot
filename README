@@ -1,5 +1,0 @@
-Parallel implementations of Mandelbrot set program :
-- serial
-- OpenMP
-- MPI
-- hybrid

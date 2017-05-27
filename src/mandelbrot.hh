@@ -12,21 +12,22 @@
 #include <mpi.h>
 #endif
 
-class Mandelbrot {
+class MandelbrotSet {
 public:
 #ifdef PARALLEL_MPI
-  Mandelbrot(int nx, int ny, 
-             dfloat x_min, dfloat x_max, 
-             dfloat y_min, dfloat y_max,
-             int n_iter, int n_rows, MPI_Comm comm);
+  MandelbrotSet(int nx, int ny, 
+                dfloat x_min, dfloat x_max, 
+                dfloat y_min, dfloat y_max,
+                int n_iter, bool output_img, 
+                int n_rows, MPI_Comm comm);
 #else
-  Mandelbrot(int nx, int ny, 
-             dfloat x_min, dfloat x_max, 
-             dfloat y_min, dfloat y_max,
-             int n_iter);
+  MandelbrotSet(int nx, int ny, 
+                dfloat x_min, dfloat x_max, 
+                dfloat y_min, dfloat y_max,
+                int n_iter, bool output_img);
 #endif
 
-  void run(bool output_img);
+  void run();
 
 private:
   // global size of the problem
@@ -37,11 +38,14 @@ private:
   // max number of iterations
   int m_max_iter;
 
+  // toggle on/off output image
+  bool m_output_img;
+
   // grid storage
   Buffer m_mandel_set;
 
-#ifdef PARALLEL_MPI
   // dumper to use for outputs
+#ifdef PARALLEL_MPI
   std::unique_ptr<DumperBinary> m_pdumper;
 #else
   std::unique_ptr<DumperASCII> m_pdumper;
@@ -79,6 +83,8 @@ private:
   // compute local sizes/offsets defining a row for the grid decomposition
   std::vector<int> get_row_def(int row_idx, int nx, int ny, int n_rows);
 
+  void init_dumper_colors();
+
 #ifdef PARALLEL_MPI
   // proc rank
   int m_prank;
@@ -97,8 +103,9 @@ private:
   void init_mpi_simple();
 
   // for master/workers load balancing
+  void init_writers(int prank_nonwriter);
   void mpi_master();
-  void mpi_worker(bool output_img);
+  void mpi_worker();
 
 #endif /* PARALLEL_MPI */
 

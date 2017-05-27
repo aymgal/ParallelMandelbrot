@@ -2,3 +2,6 @@
 src/.DS_Store
 src/*.o
 src/*.dSYM
+src/mandel_srl
+src/mandel_omp
+src/mandel_mpi
