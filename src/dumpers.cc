@@ -86,8 +86,8 @@ void DumperBinary::dump_manual(int arg1, int arg2, int offset_h, int total_h) {
   std::stringstream sfilename;
   sfilename << "out_" << arg1 << "_" << arg2 << ".bmp";
 
-  int w = m_grid.nx();
-  int h = m_grid.ny();
+  int h = m_grid.nx();
+  int w = m_grid.ny();
 
   int row_size = 3 * w;
   // if the file width (3*w) is not a multiple of 4 adds enough bytes to make it
