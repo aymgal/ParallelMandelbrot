@@ -2,8 +2,9 @@
 
 ########## OPTIONS ##########
 
-OPTS += -DOUTPUT_IMAGE
+# OPTS += -DOUTPUT_IMAGE
 OPTS += -DOUTPUT_TIMINGS
+
 # OPTS += -DUSE_STDCOMPLEX
 # OPTS += -DUSE_DISTANCE_ESTIM
 # OPTS += -DCOLOR_ITERATIONS
@@ -17,7 +18,7 @@ OPTS += -DMPI_MASTER_WORKERS
 
 
 #-- for debugging --#
-OPTS += -DCOLOR_PRANK
+# OPTS += -DCOLOR_PRANK
 # OPTS += -DVERBOSE
 
 # DEBUG = -g
@@ -48,6 +49,8 @@ OBJS     = main.o mandelbrot.o buffer.o grid.o dumpers.o \
 OBJS_OMP = main_omp.o mandelbrot_omp.o buffer.o grid.o dumpers.o \
 		   utils.o timers.o
 OBJS_MPI = main_mpi.o mandelbrot_mpi.o buffer_mpi.o grid_mpi.o dumpers_mpi.o \
+		   utils_mpi.o timers_mpi.o
+OBJS_HYB = main_hyb.o mandelbrot_hyb.o buffer_mpi.o grid_mpi.o dumpers_mpi.o \
 		   utils_mpi.o timers_mpi.o
 
 EXEC_SERIAL = mandel_srl
@@ -111,8 +114,14 @@ timers_mpi.o: timers.cc timers.hh
 #**** compilation of hydrid OpenMP+MPI exec *****#
 $(EXEC_HYBRID) : CXXFLAGS += -DPARALLEL_MPI -DPARALLEL_OPENMP -fopenmp
 $(EXEC_HYBRID) : CXX = mpic++
-$(EXEC_HYBRID) : $(OBJS_MPI)
-	$(LD) -o $@ $(OBJS_MPI) $(LDFLAGS)
+$(EXEC_HYBRID) : $(OBJS_HYB)
+	$(LD) -o $@ $(OBJS_HYB) $(LDFLAGS)
+
+main_hyb.o: main.cc
+	$(LD) $< $(CXXFLAGS) -c -o $@
+
+mandelbrot_hyb.o: mandelbrot.cc mandelbrot.hh
+	$(LD) $< $(CXXFLAGS) -c -o $@
 #**********************************#
 
 # utility targets

@@ -10,7 +10,7 @@
 #include "utils.hh"
 
 
-#ifdef MPI_MASTER_WORKERS
+#ifdef PARALLEL_MPI
 #define WORK_TAG    2
 #define FEEBACK_TAG 1
 #define END_TAG     0

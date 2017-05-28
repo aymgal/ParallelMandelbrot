@@ -21,7 +21,7 @@
 
 static void usage(const std::string & prog_name);
 
-#ifdef PARALLEL_MPI
+#if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
 static void process_args(int argc, char *argv[], 
                          int& int1, int& int2, int& int3);
 #else
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef VERBOSE
 #if defined(PARALLEL_OPENMP) && defined(PARALLEL_MPI)
-  std::cout << "Number of omp threads on rank " << prank << " : "
+  std::cout << "Number of omp threads for rank " << prank << " : "
             << omp_get_max_threads() << std::endl;
 #elif defined(PARALLEL_OPENMP)
   std::cout << "Number of omp threads : " << omp_get_max_threads()
@@ -112,10 +112,10 @@ static void usage(const std::string & prog_name) {
   exit(0);
 }
 
-#ifdef PARALLEL_MPI
+#if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
 static void process_args(int argc, char *argv[], 
                          int& int1, int& int2, int& int3) {
-  if (argc < 5)
+  if (argc < 4)
     usage(argv[0]);
 
   std::stringstream arg1(argv[1]);
@@ -133,7 +133,7 @@ static void process_args(int argc, char *argv[],
 
 static void process_args(int argc, char *argv[], 
                          int& int1, int& int2) {
-  if (argc < 4)
+  if (argc < 3)
     usage(argv[0]);
 
   std::stringstream arg1(argv[1]);
