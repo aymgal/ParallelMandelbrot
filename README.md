@@ -7,11 +7,18 @@ Different versions :
 * OpenMP
 * MPI
 * MPI with master/workers load-balancing
-* hybrid OpenMP + MPI (not ready yet)
+* hybrid OpenMP + MPI
 
-It is written in unified source code. The makefile controls which version is compiled :
+Output example, for a window in the complex plane defined by [-0.2, 0.4] x [0.5, 1.1] :
+<p align="center">
+<img src="images/out_4000_100.bmp" alt="Output example" width="400" align="center"/>
+</p>
+
+It is written in a unique source code. The Makefile controls which version is compiled :
 * `make srl` for serial version
 * `make omp` for OpenMP version
-* `make mpi` with flag `MPI_SIMPLE` for simple MPI version
-* `make mpi` with flag `MPI_MASTER_WORKERS` for load-balancing MPI
+* `make mpi` 
+	* with `MPI_SIMPLE` flag for simple MPI version
+	* with `MPI_MASTER_WORKERS` flag for load-balancing MPI version
+* `make hyb` with appropriate MPI flag for hybrid OpenMP + MPI version
 * `make` for all.
