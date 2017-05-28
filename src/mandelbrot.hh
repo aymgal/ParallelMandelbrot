@@ -110,8 +110,8 @@ private:
 
   // for master/workers load balancing
   void init_writers(int prank_nonwriter);
-  void mpi_master();
-  void mpi_worker();
+  void compute_master();
+  void compute_worker();
 
 #endif /* PARALLEL_MPI */
 

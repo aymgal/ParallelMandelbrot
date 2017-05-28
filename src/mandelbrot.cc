@@ -90,8 +90,8 @@ void MandelbrotSet::run() {
   m_ptimer->start_chrono();
 
   /* computation */
-  if (m_prank == 0)      mpi_master(); // master
-  else if (m_prank != 0) mpi_worker(); // workers
+  if (m_prank == 0)      compute_master(); // master
+  else if (m_prank != 0) compute_worker(); // workers
 
   m_ptimer->stop_chrono();
 #ifdef OUTPUT_TIMINGS
@@ -170,7 +170,7 @@ void MandelbrotSet::compute_pix(int ix, int iy) {
 }
 
 dfloat MandelbrotSet::solve_recursive(dfloat cx, dfloat cy, 
-                                   dfloat z0x, dfloat z0y) {
+                                      dfloat z0x, dfloat z0y) {
   int iter;
   dfloat zx, zy;
   dfloat mod_z2;
@@ -312,7 +312,7 @@ dfloat MandelbrotSet::solve_recursive(dfloat cx, dfloat cy,
 
 
 std::vector<int> MandelbrotSet::get_row_def(int row_idx, int nx, int ny, 
-                                         int n_rows) {
+                                            int n_rows) {
   std::vector<int> sizes(4);
 
   int row_nx = nx / n_rows + (row_idx < nx % n_rows ? 1 : 0);
@@ -384,10 +384,7 @@ void MandelbrotSet::init_writers(int prank_nonwriter) {
   }
 }
 
-void MandelbrotSet::mpi_master() {
-  int w_prank; // worker prank
-  int row_idx; // index of next row to compute
-  int n_busy;  // number of currently busy workers
+void MandelbrotSet::compute_master() {
   MPI_Status status;
 
   // number of workers
@@ -403,10 +400,12 @@ void MandelbrotSet::mpi_master() {
   std::cerr << "> " << n_workers << " workers" << std::endl;
 #endif
 
+  int w_prank; // worker prank
+  int n_busy  = 0; // index of next row to compute
+  int row_idx = 0; // number of currently busy workers
+
   /* compute local sizes for each worker + put them in lists to send */
-  // initial sendings
-  n_busy  = 0;
-  row_idx = 0;
+  // first, send a work to all workers
   for (w_prank = 1; w_prank <= n_workers; w_prank++) {
     // get corresponding local sizes
     buf_locals = get_row_def(row_idx, m_global_nx, m_global_ny, m_n_rows);
@@ -417,8 +416,8 @@ void MandelbrotSet::mpi_master() {
     row_idx++;
   }
 
-  /* 'infinite' loop to feed workers with new rows */
-  int w_feeback = 1;
+  /* 'infinite' loop to feed workers with new rows as soon as possible */
+  int w_feeback;
   for (;;) {
 
     MPI_Recv(&w_feeback, 1, MPI_INT, 
@@ -449,8 +448,8 @@ void MandelbrotSet::mpi_master() {
   } /* end infinite loop */
 }
 
-void MandelbrotSet::mpi_worker() {
-  int w_feeback = 1;
+void MandelbrotSet::compute_worker() {
+  int w_feeback;
   MPI_Status status;
 
   // define a buffer for local sizes
