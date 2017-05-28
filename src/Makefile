@@ -27,15 +27,13 @@ OPTS += -DCOLOR_PRANK
 #############################
 
 # define any specific target machine
-# SYSTYPE = "mac_aym"
-SYSTYPE = "phpc_cluster"
+SYSTYPE = "mac_aym"
+# SYSTYPE = "phpc_cluster"
 
 ifeq ($(SYSTYPE), "mac_aym")
-CXX = g++-6
+CXX = g++-7
 endif
 ifeq ($(SYSTYPE), "phpc_cluster")
-CXX = g++-6
-else
 CXX = g++
 endif
 
