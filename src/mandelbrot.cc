@@ -21,23 +21,22 @@
 MandelbrotSet::MandelbrotSet(int nx, int ny, 
                              dfloat x_min, dfloat x_max, 
                              dfloat y_min, dfloat y_max,
-                             int n_iter, bool output_img, 
-                             int n_rows, MPI_Comm comm)
+                             int n_iter, int n_rows, MPI_Comm comm)
     : m_global_nx(nx), m_global_ny(ny), 
       m_global_xmin(x_min), m_global_xmax(x_max), 
       m_global_ymin(y_min), m_global_ymax(y_max),
-      m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
+      m_max_iter(n_iter), m_mandel_set(nx, ny),
       m_pdumper(new DumperBinary(m_mandel_set.storage(), comm)), 
       m_ptimer(new TimerMPI(comm)), m_n_rows(n_rows), m_communicator(comm)
 #else
 MandelbrotSet::MandelbrotSet(int nx, int ny, 
                              dfloat x_min, dfloat x_max, 
                              dfloat y_min, dfloat y_max,
-                             int n_iter, bool output_img)
+                             int n_iter)
     : m_global_nx(nx), m_global_ny(ny), 
       m_global_xmin(x_min), m_global_xmax(x_max), 
       m_global_ymin(y_min), m_global_ymax(y_max),
-      m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
+      m_max_iter(n_iter), m_mandel_set(nx, ny),
       m_pdumper(new DumperASCII(m_mandel_set.storage())),
       m_ptimer(new TimerSTD)
 #endif
@@ -74,9 +73,8 @@ MandelbrotSet::MandelbrotSet(int nx, int ny,
   m_local_offset_x = m_local_offset_y = 0;
 #endif
 
-  if (m_output_img) {
-    init_dumper_colors();
-  }
+  // initialize min and max color values
+  init_dumper_colors();
 }
 
 
@@ -110,9 +108,9 @@ void MandelbrotSet::run() {
   if (m_prank == 0) cout_timing(m_ptimer->get_timing());
 #endif
 
-  if (m_output_img) {
+#ifdef OUTPUT_IMAGE
     m_pdumper->dump(m_global_nx, m_max_iter);
-  }
+#endif
 
 /* serial or OpenMP-only */
 #else
@@ -126,9 +124,9 @@ void MandelbrotSet::run() {
   cout_timing(m_ptimer->get_timing());
 #endif
 
-  if (m_output_img) {
+#ifdef OUTPUT_IMAGE
     m_pdumper->dump(m_global_nx, m_max_iter);
-  }
+#endif
 #endif
 }
 
@@ -331,16 +329,17 @@ std::vector<int> MandelbrotSet::get_row_def(int row_idx, int nx, int ny,
 
 void MandelbrotSet::init_dumper_colors() {
   m_pdumper->set_min(m_value_inside);
-#if defined(PARALLEL_MPI) && defined(COLOR_PRANK)
+
+#ifdef COLOR_ITERATIONS
+  m_pdumper->set_max(m_max_iter);
+
+#elif defined(PARALLEL_MPI) && defined(COLOR_PRANK)
   m_pdumper->set_max(m_psize-1); // set max color value to number of workers
+
 #else
   m_pdumper->set_max(m_value_outside);
 #endif
 }
-
-// void MandelbrotSet::cout_timing(seconds timing) const {
-//   std::cout << m_global_nx << " " << timing.count() << std::endl;
-// }
 
 void MandelbrotSet::cout_timing(double timing) const {
   std::cout << m_global_nx << " " << timing << std::endl;
@@ -484,10 +483,10 @@ void MandelbrotSet::compute_worker() {
     /* compute the set and write corresponding part in image file */
     compute_set();
 
-    if (m_output_img) {
+#ifdef OUTPUT_IMAGE
       m_pdumper->dump_manual(m_global_nx, m_max_iter, 
                              m_local_offset_x, m_global_nx);
-    }
+#endif
 
     /* finally send message to tell master that worker is ready for new work */
     MPI_Send(&w_feeback, 1, MPI_INT, 0, FEEBACK_TAG, m_communicator);

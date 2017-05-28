@@ -19,13 +19,12 @@ public:
   MandelbrotSet(int nx, int ny, 
                 dfloat x_min, dfloat x_max, 
                 dfloat y_min, dfloat y_max,
-                int n_iter, bool output_img, 
-                int n_rows, MPI_Comm comm);
+                int n_iter, int n_rows, MPI_Comm comm);
 #else
   MandelbrotSet(int nx, int ny, 
                 dfloat x_min, dfloat x_max, 
                 dfloat y_min, dfloat y_max,
-                int n_iter, bool output_img);
+                int n_iter;
 #endif
 
   void run();
@@ -38,9 +37,6 @@ private:
 
   // max number of iterations
   int m_max_iter;
-
-  // toggle on/off output image
-  bool m_output_img;
 
   // grid storage
   Buffer m_mandel_set;
