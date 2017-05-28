@@ -24,7 +24,7 @@ public:
   MandelbrotSet(int nx, int ny, 
                 dfloat x_min, dfloat x_max, 
                 dfloat y_min, dfloat y_max,
-                int n_iter;
+                int n_iter);
 #endif
 
   void run();

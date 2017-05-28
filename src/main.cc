@@ -69,12 +69,20 @@ int main(int argc, char *argv[]) {
 
 /* initialization of a mandelbrodt instance */
   int N, n_max;
-#ifdef PARALLEL_MPI
+#if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
   int n_rows;
   process_args(argc, argv, N, n_max, n_rows);
 
   MandelbrotSet mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max, 
                        n_rows, MPI_COMM_WORLD);
+  
+#elif defined(PARALLEL_MPI) && defined(MPI_SIMPLE)
+  int n_rows = 0; // useless in this case (non-load balanced MPI program)
+  process_args(argc, argv, N, n_max);
+
+  MandelbrotSet mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max, 
+                       n_rows, MPI_COMM_WORLD);
+
 #else
   process_args(argc, argv, N, n_max);
 
@@ -95,10 +103,10 @@ int main(int argc, char *argv[]) {
 
 static void usage(const std::string & prog_name) {
 #ifdef PARALLEL_MPI
-  std::cerr << prog_name << " <grid_size> <n_iter_max> <n_rows> <output_img>"
+  std::cerr << prog_name << " <grid_size> <n_iter_max> <n_rows>"
             << std::endl;
 #else
-  std::cerr << prog_name << " <grid_size> <n_iter_max> <output_img>" 
+  std::cerr << prog_name << " <grid_size> <n_iter_max>" 
            << std::endl;
 #endif
   exit(0);
