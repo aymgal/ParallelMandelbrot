@@ -4,6 +4,9 @@
 #ifdef USE_STDCOMPLEX
 #include <complex>
 #endif
+#ifdef PARALLEL_OPENMP
+#include <omp.h>
+#endif
 
 #include "mandelbrot.hh"
 #include "grid.hh"
@@ -342,7 +345,30 @@ void MandelbrotSet::init_dumper_colors() {
 }
 
 void MandelbrotSet::cout_timing(double timing) const {
-  std::cout << m_global_nx << " " << timing << std::endl;
+  /* method that prints out maximum of infos 
+   * about problem size and computational resources
+   */
+   int n_procs = 0;   // number of processes
+   int n_threads = 1; // number of threads
+   int n_rows = 1;    // number of rows in which the grid is divided
+
+#ifdef PARALLEL_MPI
+   n_procs = m_psize;
+#if defined(MPI_MASTER_WORKERS)
+   n_rows = m_n_rows;
+#elif define(MPI_SIMPLE)
+   n_rows = m_psize;
+#endif
+#endif
+
+#ifdef PARALLEL_OPENMP
+   n_threads = omp_get_max_threads();
+#endif
+
+  std::cout << m_global_nx << " " << m_global_ny << " " 
+            << m_max_iter << " " << n_rows << " "
+            << n_procs << " " << n_threads << " " 
+            << timing << std::endl;
 }
 
 /* everything below is MPI-related methods */

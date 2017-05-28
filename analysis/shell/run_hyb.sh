@@ -31,7 +31,7 @@ set logscale x
 set logscale y
 set xlabel "N [-]"
 set ylabel "time [s]"
-plot "timings_hyb.dat" using 1:2 with lp
+plot "timings_hyb.dat" using 1:7 with lp
 EOF
 
 open timings_hyb.png
