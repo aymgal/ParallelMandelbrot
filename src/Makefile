@@ -11,7 +11,7 @@ OPTS += -DOUTPUT_TIMINGS
 # OPTS += -DSQUARE_TRICK
 
 
-#-- !!! only one of these options at a time !!! --#
+#-- only one of these two options at a time !
 # OPTS += -DMPI_SIMPLE
 OPTS += -DMPI_MASTER_WORKERS
 
@@ -20,24 +20,19 @@ OPTS += -DMPI_MASTER_WORKERS
 OPTS += -DCOLOR_PRANK
 # OPTS += -DVERBOSE
 
-DEBUG = -g
+# DEBUG = -g
 
-# PROF = -pg
+# PROFIL = -pg
 
 #############################
 
-EXEC_SERIAL = mandel_srl
-EXEC_OMP    = mandel_omp
-EXEC_MPI    = mandel_mpi
+# define any specific target machine
+SYSTYPE = "mac_aym"
+# SYSTYPE = "phpc_cluster"
 
-all: clean $(EXEC_SERIAL) $(EXEC_OMP) $(EXEC_MPI)
-
-srl: clean $(EXEC_SERIAL)
-omp: clean $(EXEC_OMP)
-mpi: clean $(EXEC_MPI)
-
-CXX = g++-6
-
+ifeq ($(SYSTYPE), "mac_aym")
+CXX = g++-7
+endif
 ifeq ($(SYSTYPE), "phpc_cluster")
 CXX = g++
 endif
@@ -45,7 +40,7 @@ endif
 LD = $(CXX)
 OPTIMIZE = -Wall -Wextra -Werror -pedantic -std=c++11 -O3
 
-CXXFLAGS = $(OPTIMIZE) $(DEBUG) $(PROF) $(OPTS)
+CXXFLAGS = $(OPTIMIZE) $(DEBUG) $(PROFIL) $(OPTS)
 LDFLAGS  = -lm $(CXXFLAGS)
 
 OBJS     = main.o mandelbrot.o buffer.o grid.o dumpers.o \
@@ -54,6 +49,18 @@ OBJS_OMP = main_omp.o mandelbrot_omp.o buffer.o grid.o dumpers.o \
 		   utils.o timers.o
 OBJS_MPI = main_mpi.o mandelbrot_mpi.o buffer_mpi.o grid_mpi.o dumpers_mpi.o \
 		   utils_mpi.o timers_mpi.o
+
+EXEC_SERIAL = mandel_srl
+EXEC_OMP    = mandel_omp
+EXEC_MPI    = mandel_mpi
+EXEC_HYBRID = mandel_hyb
+
+all: clean $(EXEC_SERIAL) $(EXEC_OMP) $(EXEC_MPI) $(EXEC_HYBRID)
+
+srl: clean $(EXEC_SERIAL)
+omp: clean $(EXEC_OMP)
+mpi: clean $(EXEC_MPI)
+hyb: clean $(EXEC_HYBRID)
 
 #*** compilation of serial exec ***#
 $(EXEC_SERIAL) : CXXFLAGS += -ftree-vectorize
@@ -99,6 +106,13 @@ utils_mpi.o: utils.cc utils.hh
 
 timers_mpi.o: timers.cc timers.hh
 	$(LD) $< $(CXXFLAGS) -c -o $@
+#**********************************#
+
+#**** compilation of hydrid OpenMP+MPI exec *****#
+$(EXEC_HYBRID) : CXXFLAGS += -DPARALLEL_MPI -DPARALLEL_OPENMP -fopenmp
+$(EXEC_HYBRID) : CXX = mpic++
+$(EXEC_HYBRID) : $(OBJS_MPI)
+	$(LD) -o $@ $(OBJS_MPI) $(LDFLAGS)
 #**********************************#
 
 # utility targets
