@@ -39,7 +39,7 @@ MandelbrotSet::MandelbrotSet(int nx, int ny,
       m_global_ymin(y_min), m_global_ymax(y_max),
       m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
       m_pdumper(new DumperASCII(m_mandel_set.storage())),
-      m_timer(new TimerSTD(comm))
+      m_timer(new TimerSTD)
 #endif
 {
   m_mod_z2_th = 4.0;
