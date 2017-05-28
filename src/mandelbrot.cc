@@ -28,7 +28,7 @@ MandelbrotSet::MandelbrotSet(int nx, int ny,
       m_global_ymin(y_min), m_global_ymax(y_max),
       m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
       m_pdumper(new DumperBinary(m_mandel_set.storage(), comm)), 
-      m_timer(new TimerMPI(comm)), m_n_rows(n_rows), m_communicator(comm)
+      m_ptimer(new TimerMPI(comm)), m_n_rows(n_rows), m_communicator(comm)
 #else
 MandelbrotSet::MandelbrotSet(int nx, int ny, 
                              dfloat x_min, dfloat x_max, 
@@ -39,7 +39,7 @@ MandelbrotSet::MandelbrotSet(int nx, int ny,
       m_global_ymin(y_min), m_global_ymax(y_max),
       m_max_iter(n_iter), m_output_img(output_img), m_mandel_set(nx, ny),
       m_pdumper(new DumperASCII(m_mandel_set.storage())),
-      m_timer(new TimerSTD)
+      m_ptimer(new TimerSTD)
 #endif
 {
   m_mod_z2_th = 4.0;
@@ -87,47 +87,47 @@ void MandelbrotSet::run() {
 
 /* master/workers MPI */
 #if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
-  m_timer->start_chrono();
+  m_ptimer->start_chrono();
 
   /* computation */
   if (m_prank == 0)      mpi_master(); // master
   else if (m_prank != 0) mpi_worker(); // workers
 
-  m_timer->end_chrono();
+  m_ptimer->stop_chrono();
 #ifdef OUTPUT_TIMINGS
-  if (m_prank == 0) cout_timing(m_timer->get_timing());
+  if (m_prank == 0) cout_timing(m_ptimer->get_timing());
 #endif
 
 /* simple MPI */
 #elif defined(PARALLEL_MPI) && defined(MPI_SIMPLE)
-  m_timer->start_chrono();
+  m_ptimer->start_chrono();
 
   /* computation */
   compute_set();
 
-  m_timer->end_chrono();
+  m_ptimer->stop_chrono();
 #ifdef OUTPUT_TIMINGS
-  if (m_prank == 0) cout_timing(m_timer->get_timing());
+  if (m_prank == 0) cout_timing(m_ptimer->get_timing());
 #endif
 
   if (m_output_img) {
-    m_pdumper->dump(1, 1);
+    m_pdumper->dump(m_global_nx, m_max_iter);
   }
 
 /* serial or OpenMP-only */
 #else
-  m_timer->start_chrono();
+  m_ptimer->start_chrono();
 
   /* computation */
   compute_set();
 
-  m_timer->end_chrono();
+  m_ptimer->stop_chrono();
 #ifdef OUTPUT_TIMINGS
-  cout_timing(m_timer->get_timing());
+  cout_timing(m_ptimer->get_timing());
 #endif
 
   if (m_output_img) {
-    m_pdumper->dump(0, 0);
+    m_pdumper->dump(m_global_nx, m_max_iter);
   }
 #endif
 }
@@ -486,7 +486,8 @@ void MandelbrotSet::mpi_worker() {
     compute_set();
 
     if (m_output_img) {
-      m_pdumper->dump_manual_offset(m_local_offset_x, m_global_nx);
+      m_pdumper->dump_manual(m_global_nx, m_max_iter, 
+                             m_local_offset_x, m_global_nx);
     }
 
     /* finally send message to tell master that worker is ready for new work */

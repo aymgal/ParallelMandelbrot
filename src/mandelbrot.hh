@@ -12,6 +12,7 @@
 #include "gvars.hh"
 #include "timers.hh"
 
+
 class MandelbrotSet {
 public:
 #ifdef PARALLEL_MPI
@@ -45,17 +46,14 @@ private:
   Buffer m_mandel_set;
 
   // dumper for image output
-  // timer for timings output
 #ifdef PARALLEL_MPI
-  std::unique_ptr<DumperBinary> m_pdumper;
-  // TimerMPI m_timer;
+    std::unique_ptr<DumperBinary> m_pdumper;
 #else
-  std::unique_ptr<DumperASCII> m_pdumper;
-  // TimerSTD m_timer;
+    std::unique_ptr<DumperASCII> m_pdumper;
 #endif
 
-  // TMP
-  std::unique_ptr<Timer> m_timer;
+  // timer for timings output
+  std::unique_ptr<Timer> m_ptimer;
 
   // threshold squared modulus
   dfloat m_mod_z2_th;
