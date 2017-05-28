@@ -10,7 +10,7 @@ public:
   Timer() {}
 
   virtual void start_chrono() = 0;
-  virtual void end_chrono()   = 0;
+  virtual void stop_chrono()   = 0;
   virtual double get_timing() = 0;
 
 protected:
@@ -23,7 +23,7 @@ public:
   TimerSTD();
 
   virtual void start_chrono();
-  virtual void end_chrono();
+  virtual void stop_chrono();
   virtual double get_timing();
 
 private:
@@ -39,7 +39,7 @@ public:
   TimerMPI(MPI_Comm comm);
 
   virtual void start_chrono();
-  virtual void end_chrono();
+  virtual void stop_chrono();
   virtual double get_timing();
 
 private:

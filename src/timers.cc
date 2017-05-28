@@ -1,13 +1,13 @@
 #include "timers.hh"
 
 TimerSTD::TimerSTD()
-  : Timer(), m_start_time(clk::now()), m_end_time(clk::now()) {}
+    : Timer(), m_start_time(clk::now()), m_end_time(clk::now()) {}
 
 void TimerSTD::start_chrono() {
   m_start_time = clk::now();
 }
 
-void TimerSTD::end_chrono() {
+void TimerSTD::stop_chrono() {
   m_end_time = clk::now();
 }
 
@@ -16,6 +16,7 @@ double TimerSTD::get_timing() {
   m_timing = timing_tmp.count();
   return m_timing;
 }
+
 
 #ifdef PARALLEL_MPI
 
@@ -27,7 +28,7 @@ void TimerMPI::start_chrono() {
   m_start_time = MPI_Wtime();
 }
 
-void TimerMPI::end_chrono() {
+void TimerMPI::stop_chrono() {
   MPI_Barrier(m_communicator);
   m_end_time = MPI_Wtime();
 }
