@@ -6,7 +6,8 @@
 
 #ifdef PARALLEL_OPENMP
 #include <omp.h> // for omp_get_max_threads()
-#elif PARALLEL_MPI
+#endif
+#if PARALLEL_MPI
 #include <mpi.h>
 #endif
 
@@ -25,7 +26,15 @@ static void process_args(int argc, char *argv[],
 int main(int argc, char *argv[]) {
 
 #ifdef PARALLEL_MPI
+
+#ifdef PARALLEL_OPENMP // for hybrid program (= multi-threading MPI)
+  int required, provided;
+  required = MPI_THREAD_FUNNELED;
+  MPI_Init_thread(&argc, &argv, required, &provided);
+#else
   MPI_Init(&argc, &argv);
+#endif
+
   int prank, psize;
   MPI_Comm_rank(MPI_COMM_WORLD, &prank);
   MPI_Comm_size(MPI_COMM_WORLD, &psize);

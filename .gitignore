@@ -7,6 +7,7 @@ src/*.bmp
 src/mandel_srl
 src/mandel_omp
 src/mandel_mpi
+src/mandel_hyb
 analysis/.DS_Store
 analysis/*.dat
 analysis/*.png
