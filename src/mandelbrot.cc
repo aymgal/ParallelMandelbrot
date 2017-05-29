@@ -20,30 +20,16 @@
 #endif
 
 
-#if PARALLEL_MPI
 MandelbrotSet::MandelbrotSet(int nx, int ny, 
                              dfloat x_min, dfloat x_max, 
                              dfloat y_min, dfloat y_max,
-                             int n_iter, int n_rows, MPI_Comm comm)
+                             int n_iter, int n_rows)
     : m_global_nx(nx), m_global_ny(ny), 
       m_global_xmin(x_min), m_global_xmax(x_max), 
       m_global_ymin(y_min), m_global_ymax(y_max),
-      m_max_iter(n_iter), m_mandel_set(nx, ny),
-      m_pdumper(new DumperBinary(m_mandel_set.storage(), comm)), 
-      m_ptimer(new TimerMPI(comm)), m_n_rows(n_rows), m_communicator(comm)
-#else
-MandelbrotSet::MandelbrotSet(int nx, int ny, 
-                             dfloat x_min, dfloat x_max, 
-                             dfloat y_min, dfloat y_max,
-                             int n_iter)
-    : m_global_nx(nx), m_global_ny(ny), 
-      m_global_xmin(x_min), m_global_xmax(x_max), 
-      m_global_ymin(y_min), m_global_ymax(y_max),
-      m_max_iter(n_iter), m_mandel_set(nx, ny),
-      m_pdumper(new DumperASCII(m_mandel_set.storage())),
-      m_ptimer(new TimerSTD)
-#endif
-{
+      m_max_iter(n_iter), m_n_rows(n_rows), 
+      m_mandel_set(nx, ny) {
+
   m_mod_z2_th = 4.0;
   m_value_inside  = 0.0;   // so the set appears black
   m_value_outside = 100.0; 
@@ -54,31 +40,56 @@ MandelbrotSet::MandelbrotSet(int nx, int ny,
 #ifdef USE_DISTANCE_ESTIM
   m_dist2_th = 1.0e-6;
 #endif
+}
+
+/* ------------------------ initialization methods ------------------------- */
 
 #ifdef PARALLEL_MPI
+
+void MandelbrotSet::initialize(MPI_Comm comm) {
+  // set the main communicator
+  m_communicator = comm;
+
   // get the number of proc and the rank in the proc
-  MPI_Comm_rank(m_communicator, &m_prank);
-  MPI_Comm_size(m_communicator, &m_psize);
+  MPI_Comm_rank(comm, &m_prank);
+  MPI_Comm_size(comm, &m_psize);
+
+  m_pdumper = std::unique_ptr<DumperBinary>(
+                new DumperBinary(m_mandel_set.storage(), comm));
+  m_ptimer  = std::unique_ptr<Timer>(new TimerMPI(comm));
 
 #if defined(MPI_SIMPLE)
   init_mpi_simple();
 #elif defined(MPI_MASTER_WORKERS)
-  init_writers(0); // because master is rank 0 (do not write output image)
+  init_mpi_writers(0); // because master is rank 0 (do not write output image)
 #else
 #error "MACRO 'MPI_' UNDEFINED"
-#endif
-
-#else
-  // if non-MPI code, LOCAL and GLOBAL variables are the same
-  m_local_nx = m_global_nx;
-  m_local_ny = m_global_ny;
-  // and no offsets are needed
-  m_local_offset_x = m_local_offset_y = 0;
 #endif
 
   // initialize min and max color values
   init_dumper_colors();
 }
+
+#else
+
+void MandelbrotSet::initialize() {
+  m_pdumper = std::unique_ptr<DumperASCII>(
+                new DumperASCII(m_mandel_set.storage()));
+  m_ptimer  = std::unique_ptr<Timer>(new TimerSTD);
+
+  // if non-MPI code, LOCAL and GLOBAL variables are the same
+  m_local_nx = m_global_nx;
+  m_local_ny = m_global_ny;
+  // and no offsets are needed
+  m_local_offset_x = m_local_offset_y = 0;
+
+  // initialize min and max color values
+  init_dumper_colors();
+}
+
+#endif
+
+/* --------------------------- end init methods ---------------------------- */
 
 
 /* --------------------------------- RUN ----------------------------------- */
@@ -398,7 +409,7 @@ void MandelbrotSet::init_mpi_simple() {
   m_mandel_set.resize(m_local_nx, m_local_ny);
 }
 
-void MandelbrotSet::init_writers(int prank_nonwriter) {
+void MandelbrotSet::init_mpi_writers(int prank_nonwriter) {
   // create a new communicator for each worker alone
   int color = m_prank; // so the color is unique
   MPI_Comm_split(m_communicator, color, m_prank, &m_MW_communicator);

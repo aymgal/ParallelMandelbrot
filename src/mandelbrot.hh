@@ -15,19 +15,17 @@
 
 class MandelbrotSet {
 public:
-#ifdef PARALLEL_MPI
   MandelbrotSet(int nx, int ny, 
                 dfloat x_min, dfloat x_max, 
                 dfloat y_min, dfloat y_max,
-                int n_iter, int n_rows, MPI_Comm comm);
-#else
-  MandelbrotSet(int nx, int ny, 
-                dfloat x_min, dfloat x_max, 
-                dfloat y_min, dfloat y_max,
-                int n_iter);
-#endif
-
+                int n_iter, int n_rows);
   void run();
+
+#ifdef PARALLEL_MPI
+  void initialize(MPI_Comm comm);
+#else
+  void initialize();
+#endif
 
 private:
   // global size of the problem
@@ -37,6 +35,9 @@ private:
 
   // max number of iterations
   int m_max_iter;
+
+  // number of rows to divide complex grid (used only for MPI load-balancing)
+  int m_n_rows;
 
   // grid storage
   Buffer m_mandel_set;
@@ -94,9 +95,6 @@ private:
   // communicator size
   int m_psize;
 
-  // number of rows to divide complex grid
-  int m_n_rows;
-
   // communicators
   MPI_Comm m_communicator;    // main communicator
   MPI_Comm m_MW_communicator; // (master) and (all workers) communicator
@@ -105,7 +103,7 @@ private:
   void init_mpi_simple();
 
   // for master/workers load balancing
-  void init_writers(int prank_nonwriter);
+  void init_mpi_writers(int prank_nonwriter);
   void compute_master();
   void compute_worker();
 

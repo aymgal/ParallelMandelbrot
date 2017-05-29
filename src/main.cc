@@ -21,13 +21,8 @@
 
 static void usage(const std::string & prog_name);
 
-#if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
 static void process_args(int argc, char *argv[], 
                          int& int1, int& int2, int& int3);
-#else
-static void process_args(int argc, char *argv[], 
-                         int& int1, int& int2);
-#endif
 
 /* ------------------------------------------------------------------------- */
 
@@ -53,6 +48,7 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &psize);
 #endif
 
+  /* display some infos in verbose mode */
 #ifdef VERBOSE
 #if defined(PARALLEL_OPENMP) && defined(PARALLEL_MPI)
   std::cout << "Number of omp threads for rank " << prank << " : "
@@ -67,26 +63,16 @@ int main(int argc, char *argv[]) {
 #endif
 #endif
 
-/* initialization of a mandelbrodt instance */
-  int N, n_max;
-#if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
-  int n_rows;
+  /* initialization of a mandelbrodt instance */
+  int N, n_max, n_rows;
   process_args(argc, argv, N, n_max, n_rows);
+  MandelbrotSet mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max, n_rows);
+  // note : n_rows is unused in the case of non-load balanced MPI
 
-  MandelbrotSet mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max, 
-                       n_rows, MPI_COMM_WORLD);
-  
-#elif defined(PARALLEL_MPI) && defined(MPI_SIMPLE)
-  int n_rows = 0; // useless in this case (non-load balanced MPI program)
-  process_args(argc, argv, N, n_max);
-
-  MandelbrotSet mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max, 
-                       n_rows, MPI_COMM_WORLD);
-
+#ifdef PARALLEL_MPI
+  mandel.initialize(MPI_COMM_WORLD); /* mandatory ! */
 #else
-  process_args(argc, argv, N, n_max);
-
-  MandelbrotSet mandel(N, N, XMIN, XMAX, YMIN, YMAX, n_max);
+  mandel.initialize(); /* mandatory ! */
 #endif
 
   /* compute Mandelbrot set and write an image if set so */
@@ -102,17 +88,10 @@ int main(int argc, char *argv[]) {
 /* ------------------------------------------------------------------------- */
 
 static void usage(const std::string & prog_name) {
-#ifdef PARALLEL_MPI
-  std::cerr << prog_name << " <grid_size> <n_iter_max> <n_rows>"
-            << std::endl;
-#else
-  std::cerr << prog_name << " <grid_size> <n_iter_max>" 
-           << std::endl;
-#endif
+  std::cerr << prog_name << " <grid_size> <n_iter_max> <n_rows>" << std::endl;
   exit(0);
 }
 
-#if defined(PARALLEL_MPI) && defined(MPI_MASTER_WORKERS)
 static void process_args(int argc, char *argv[], 
                          int& int1, int& int2, int& int3) {
   if (argc < 4)
@@ -128,20 +107,3 @@ static void process_args(int argc, char *argv[],
   if ( (arg1.fail()) || (arg2.fail()) || (arg3.fail()) )
     usage(argv[0]);
 }
-
-#else
-
-static void process_args(int argc, char *argv[], 
-                         int& int1, int& int2) {
-  if (argc < 3)
-    usage(argv[0]);
-
-  std::stringstream arg1(argv[1]);
-  std::stringstream arg2(argv[2]);
-  arg1 >> int1;
-  arg2 >> int2;
-
-  if ( (arg1.fail()) || (arg2.fail()) )
-    usage(argv[0]);
-}
-#endif
