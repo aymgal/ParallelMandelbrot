@@ -11,6 +11,8 @@ n_threads=0	# because unused in the case of non-OpenMP code
 outfile=mpi_weak_x_${n_iter}_${n_row}_x_${n_threads}.dat
 echo "Output file name : " $outfile
 
+mkdir -p outputs
+
 rm -f outputs/$outfile
 rm -f out_*.pgm
 rm -f out_*.bmp

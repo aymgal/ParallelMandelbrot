@@ -16,5 +16,5 @@ outfile=mpi_weak_x_100_100_x_0.dat
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	
-	srun ../../src/mandel_mpi 512 100 100 >> ../outputs/$outfile
+	srun ../../src/mandel_mpi 512 100 100 >> outputs/$outfile
 done
