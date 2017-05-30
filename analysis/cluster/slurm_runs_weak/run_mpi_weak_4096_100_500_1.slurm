@@ -12,7 +12,7 @@ module purge
 module load gcc/5.3.0
 module load mvapich2/2.2b
 
-outfile=mpi_weak_x_100_100_x_1.dat
+outfile=mpi_weak_x_100_500_x_1.dat
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	
