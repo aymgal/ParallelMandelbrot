@@ -32,8 +32,6 @@ int main(int argc, char *argv[]) {
 #ifdef PARALLEL_OPENMP // for hybrid program (= multi-threading MPI)
   int required, provided;
   required = MPI_THREAD_FUNNELED;
-  // required = MPI_THREAD_SERIALIZED;
-  // required = MPI_THREAD_MULTIPLE;
   MPI_Init_thread(&argc, &argv, required, &provided);
 #ifdef VERBOSE
     std::cerr << "Levels of thread support " 
@@ -56,7 +54,7 @@ int main(int argc, char *argv[]) {
 #elif defined(PARALLEL_OPENMP)
   std::cout << "Number of omp threads : " << omp_get_max_threads()
             << std::endl;
-#elif && defined(PARALLEL_MPI)
+#elif defined(PARALLEL_MPI)
   std::cout << "Rank of processor : " << prank << std::endl;
 #else
   std::cout << "Serial code" << prank << std::endl;
