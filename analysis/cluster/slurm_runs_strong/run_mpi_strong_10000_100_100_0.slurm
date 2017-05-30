@@ -16,5 +16,5 @@ outfile=mpi_strong_10000_100_100_x_0.dat
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	
-	srun ../../src/mandel_mpi $N $n_iter $n_row >> outputs/$outfile
+	srun ../../src/mandel_mpi 10000 100 100 >> outputs/$outfile
 done
