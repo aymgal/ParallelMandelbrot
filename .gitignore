@@ -4,6 +4,7 @@
 **/*.dSYM
 **/*.pgm
 **/*.bmp
+**/*.pyc
 src/mandel_srl
 src/mandel_omp
 src/mandel_mpi
