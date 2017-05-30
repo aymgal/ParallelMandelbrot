@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 #elif defined(PARALLEL_MPI)
   std::cout << "Rank of processor : " << prank << std::endl;
 #else
-  std::cout << "Serial code" << prank << std::endl;
+  std::cout << "Serial code" << std::endl;
 #endif
 #endif
 
