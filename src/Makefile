@@ -12,8 +12,8 @@ OPTS += -DOUTPUT_TIMINGS
 # OPTS += -DSQUARE_TRICK
 
 
-#-- only one of these two options at a time !
-# OPTS += -DMPI_SIMPLE
+#-- only one of these two options at a time along with PARALLEL_MPI
+# OPTS += -DMPI_SIMPLE # shouldn't be efficient, only for analysis purposes
 OPTS += -DMPI_MASTER_WORKERS
 
 
