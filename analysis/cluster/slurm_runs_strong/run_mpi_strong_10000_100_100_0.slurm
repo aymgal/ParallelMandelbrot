@@ -12,12 +12,7 @@ module purge
 module load gcc/5.3.0
 module load mvapich2/2.2b
 
-N=10000
-n_iter=100
-n_row=100
-n_threads=0 	# because unused in the case of non-OpenMP code
-
-outfile=mpi_strong_${N}_${n_iter}_${n_row}_x_${n_threads}.dat
+outfile=mpi_strong_10000_100_100_x_0.dat
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	
