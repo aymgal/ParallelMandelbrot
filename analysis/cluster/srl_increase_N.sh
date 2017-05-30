@@ -27,7 +27,7 @@ do
 	echo "Going to run several times mandel_srl, with parameters N = $N, \
 max iter = $n_iter, rows = 1, procs = 1, threads = 1)"
 
-	sbatch -n 1 ${slurm_runs_N}/run_srl_N_${N}_100.slurm
+	sbatch -n 1 ${sdir}/run_srl_N_${N}_100.slurm
 
 done
 
