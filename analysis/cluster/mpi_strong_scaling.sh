@@ -7,7 +7,7 @@ sdir=slurm_runs_strong
 N=10000
 n_iter=100
 n_row=100
-n_threads=0 	# because unused in the case of non-OpenMP code
+n_threads=1
 
 outfile=mpi_strong_${N}_${n_iter}_${n_row}_x_${n_threads}.dat
 echo "Output file name : " $outfile
@@ -33,7 +33,7 @@ max iter = $n_iter, rows = $n_row, procs = $n_proc, threads = $n_threads)"
 
 	sbatch -n ${n_proc} ${sdir}/run_mpi_strong_${N}_${n_iter}_${n_row}_${n_threads}.slurm
 
-	((n_proc = n_proc * 2)) # grows number of processes, at fixed system size
+	((n_proc = n_proc * 2))
 done
 
 #-----------------------------------------------------------------------------#
