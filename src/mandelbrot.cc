@@ -148,16 +148,15 @@ void MandelbrotSet::run() {
 
 
 void MandelbrotSet::compute_set() {
-  int ix, iy;
 
   /* OpenMP parallelization is set here */
 #ifdef PARALLEL_OPENMP
-  #pragma omp parallel for private(ix, iy) schedule(dynamic)
+  #pragma omp parallel for schedule(dynamic)
 #endif
 
-  for (ix = 0; ix < m_local_nx; ix++) {
+  for (int ix = 0; ix < m_local_nx; ix++) {
 
-    for (iy = 0; iy < m_local_ny; iy++) {
+    for (int iy = 0; iy < m_local_ny; iy++) {
 
       compute_pix(ix, iy); /* compute current pixel */
 
