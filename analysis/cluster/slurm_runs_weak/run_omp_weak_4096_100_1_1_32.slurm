@@ -12,7 +12,7 @@ module purge
 module load gcc/5.3.0
 module load mvapich2/2.2b
 
-outfile=omp_weak_x_100_100_1_x.dat
+outfile=omp_weak_x_100_1_1_x.dat
 
 export OMP_NUM_THREADS=32
 

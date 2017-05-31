@@ -12,11 +12,11 @@ module purge
 module load gcc/5.3.0
 module load mvapich2/2.2b
 
-outfile=omp_weak_x_100_1_1_x.dat
+outfile=omp_weak_x_200_1_1_x.dat
 
-export OMP_NUM_THREADS=64
+export OMP_NUM_THREADS=16
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	
-	srun ../../src/mandel_omp 5793 100 1 >> outputs/$outfile
+	srun ../../src/mandel_omp 2896 200 1 >> outputs/$outfile
 done
