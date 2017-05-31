@@ -6,7 +6,7 @@ sdir=slurm_runs_strong
 
 N=10000
 n_iter=200
-n_row=100
+n_row=1
 n_proc=1
 
 outfile=omp_strong_${N}_${n_iter}_${n_row}_${n_proc}_x.dat
