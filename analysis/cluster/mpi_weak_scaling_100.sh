@@ -21,13 +21,10 @@ cd ../../src 			# go there to compile
 make mpi
 cd ../analysis/cluster	# come back here to run
 
-n_proc_min=2
-n_proc_max=32
-n_proc=$n_proc_min
-
 ### problem size doubles when number of processors doubles
 ### --> N multiplied by sqrt(2)
 
+n_proc=2
 for N in 1024 1448 2048 2896 4096 5793
 do
 	echo "Going to run several times mandel_mpi, with parameters N = $N, \
