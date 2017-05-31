@@ -6,7 +6,7 @@ sdir=slurm_runs_strong
 
 N=10000
 n_iter=100
-n_row=50
+n_row=250
 n_threads=1
 
 outfile=mpi_strong_${N}_${n_iter}_${n_row}_x_${n_threads}.dat

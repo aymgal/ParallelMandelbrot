@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=mpi_weak
+#SBATCH --job-name=mpi_strong
 #SBATCH --account=phpc2017
 #SBATCH --mail-user=aymeric.galan@epfl.ch --mail-type=FAIL
 
@@ -12,9 +12,9 @@ module purge
 module load gcc/5.3.0
 module load mvapich2/2.2b
 
-outfile=mpi_weak_x_100_50_x_1.dat
+outfile=mpi_strong_10000_100_250_x_1.dat
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	
-	srun ../../src/mandel_mpi 512 100 50 >> outputs/$outfile
+	srun ../../src/mandel_mpi 10000 100 250 >> outputs/$outfile
 done

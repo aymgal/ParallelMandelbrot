@@ -12,9 +12,9 @@ module purge
 module load gcc/5.3.0
 module load mvapich2/2.2b
 
-outfile=mpi_weak_x_100_50_x_1.dat
+outfile=mpi_weak_x_100_250_x_1.dat
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	
-	srun ../../src/mandel_mpi 8192 100 50 >> outputs/$outfile
+	srun ../../src/mandel_mpi 4096 100 250 >> outputs/$outfile
 done
