@@ -4,7 +4,7 @@
 
 sdir=slurm_runs_N
 
-n_iter=100
+n_iter=200
 
 outfile=srl_N_x_${n_iter}_1_1_1.dat
 echo "Output file name : " $outfile
