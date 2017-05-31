@@ -30,7 +30,7 @@ do
 	echo "Going to run several times mandel_omp, with parameters N = $N, \
 max iter = $n_iter, rows = $n_row, procs = $n_proc, threads = $n_thread)"
     
-	sbatch ${sdir}/run_omp_weak_${N}_${n_iter}_${n_row}_${n_thread}.slurm
+	sbatch ${sdir}/run_omp_weak_${N}_${n_iter}_${n_row}_${n_proc}_${n_thread}.slurm
 
     ((n_thread = n_thread * 2))
 done
