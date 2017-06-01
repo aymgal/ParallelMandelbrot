@@ -30,7 +30,7 @@ do
 max iter = $n_iter, rows = $n_row, procs = $n_proc, threads = $n_thread)"
 
 	sbatch -n ${n_proc} -c ${n_thread} \
-		${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}_${n_proc}_${n_thread}.slurm
+		${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}_${n_proc}.slurm
 done
 
 #-----------------------------------------------------------------------------#
