@@ -374,7 +374,7 @@ void MandelbrotSet::cout_timing(double timing) const {
 #endif
 
 #ifdef PARALLEL_OPENMP
-   n_threads = omp_get_max_threads();
+   n_threads = omp_get_num_threads();
 #endif
 
   std::cout << m_global_nx << " " << m_global_ny << " " 
