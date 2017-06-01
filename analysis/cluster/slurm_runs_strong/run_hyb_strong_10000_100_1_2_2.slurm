@@ -2,7 +2,6 @@
 #SBATCH --job-name=hyb_strong_thr
 #SBATCH --ntasks=2		# number of MPI ranks
 #SBATCH --cpus-per-task=2	# number of threads
-#SBATCH —-nodes=2
 #SBATCH --ntasks-per-node=1	# important to go up to 16 threads for one task !
 #SBATCH --ntasks-per-socket=1
 #SBATCH --account=phpc2017
