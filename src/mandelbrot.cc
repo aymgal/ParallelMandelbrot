@@ -152,8 +152,6 @@ void MandelbrotSet::compute_set() {
   /* OpenMP parallelization is set here */
 #ifdef PARALLEL_OPENMP
   #pragma omp parallel for schedule(dynamic)
-  // #pragma omp parallel for schedule(static)
-  // #pragma omp parallel for collapse(2) schedule(dynamic)
 #endif
 
   for (int ix = 0; ix < m_local_nx; ix++) {
@@ -374,7 +372,7 @@ void MandelbrotSet::cout_timing(double timing) const {
 #endif
 
 #ifdef PARALLEL_OPENMP
-   n_threads = omp_get_num_threads();
+   n_threads = omp_get_max_threads();
 #endif
 
   std::cout << m_global_nx << " " << m_global_ny << " " 
