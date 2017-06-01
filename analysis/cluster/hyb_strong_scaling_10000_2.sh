@@ -28,14 +28,16 @@ for n_thread in 1 2 4 8 16
 do
 	echo "Going to run several times mandel_hyb, with parameters N = $N, \
 max iter = $n_iter, rows = $n_row, procs = $n_proc, threads = $n_thread)"
+
+	sbatch ${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}_${n_proc}_${n_thread}.slurm
 	
-	if [[ ${n_thread} -le 4 ]]
-	then
-		sbatch -n ${n_proc} ${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}_${n_proc}_${n_thread}.slurm
-	else
-		sbatch -n ${n_proc} -c ${n_thread} \
-			${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}_${n_proc}_x.slurm
-	fi
+	# if [[ ${n_thread} -le 4 ]]
+	# then
+	# 	sbatch -n ${n_proc} ${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}_${n_proc}_${n_thread}.slurm
+	# else
+	# 	sbatch -n ${n_proc} -c ${n_thread} \
+	# 		${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}_${n_proc}_x.slurm
+	# fi
 
 done
 

@@ -1,12 +1,14 @@
 #!/bin/bash
-#SBATCH --ntasks-per-node=1 # important to go up to 16 threads for one task !
+#SBATCH --ntasks=2		# number of MPI ranks
+#SBATCH --cpus_per_task=8	# number of threads
+#SBATCH —-nodes=2
+#SBATCH --ntasks-per-node=1	# important to go up to 16 threads for one task !
+#SBATCH --ntasks-per-socket=1
 #SBATCH --job-name=hyb_strong
 #SBATCH --account=phpc2017
 #SBATCH --mail-user=aymeric.galan@epfl.ch --mail-type=FAIL
 
-####SBATCH --ntasks=
 ####SBATCH --nodes=
-####SBATCH --cpu_per_task=
 ####SBATCH --reservation=
 
 module purge

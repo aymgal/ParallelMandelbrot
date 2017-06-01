@@ -1,12 +1,14 @@
 #!/bin/bash
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks=2		# number of MPI ranks
+#SBATCH --cpus_per_task=2	# number of threads
+#SBATCH —-nodes=2
+#SBATCH --ntasks-per-node=1	# important to go up to 16 threads for one task !
+#SBATCH --ntasks-per-socket=1
 #SBATCH --job-name=hyb_strong
 #SBATCH --account=phpc2017
 #SBATCH --mail-user=aymeric.galan@epfl.ch --mail-type=FAIL
 
-####SBATCH --ntasks=
 ####SBATCH --nodes=
-####SBATCH --cpu_per_task=
 ####SBATCH --reservation=
 
 module purge
@@ -15,7 +17,9 @@ module load mvapich2/2.2b
 
 outfile=hyb_strong_10000_100_1_2_x.dat
 
-export OMP_NUM_THREAD=2
+export OMP_NUM_THREAD=$SLURM_CPUS_PER_TASK
+
+echo $OMP_NUM_THREAD
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	

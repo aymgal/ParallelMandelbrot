@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --ntasks=2		# number of MPI ranks
-#SBATCH --cpus_per_task=4	# number of threads
+#SBATCH --cpus_per_task=16	# number of threads
 #SBATCH —-nodes=2
 #SBATCH --ntasks-per-node=1	# important to go up to 16 threads for one task !
 #SBATCH --ntasks-per-socket=1
