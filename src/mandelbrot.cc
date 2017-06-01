@@ -156,8 +156,8 @@ void MandelbrotSet::compute_set() {
 
   for (int ix = 0; ix < m_local_nx; ix++) {
 
-    std::cerr << "NUM_THREADS : " << omp_get_num_threads() 
-              << "THREAD NUM : " << omp_get_thread_num() << std::endl; 
+    std::cerr << "NUM THREADS : " << omp_get_num_threads() << " "
+              << "THREAD NUM : " << omp_get_thread_num() << std::endl;
 
     for (int iy = 0; iy < m_local_ny; iy++) {
 
