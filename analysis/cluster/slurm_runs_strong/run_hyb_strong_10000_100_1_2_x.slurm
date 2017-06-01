@@ -17,6 +17,8 @@ outfile=hyb_strong_10000_100_1_2_x.dat
 
 export OMP_NUM_THREAD=$SLURM_CPUS_PER_TASK
 
+echo $OMP_NUM_THREAD
+
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	
 	srun ../../src/mandel_hyb 10000 100 1 >> outputs/$outfile
