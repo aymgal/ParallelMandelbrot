@@ -2,6 +2,8 @@
 
 #------------------------------ weak scaling ---------------------------------#
 
+# vary number of rows of the division, to be equal to N (very good !)
+
 sdir=slurm_runs_weak
 
 n_iter=100
