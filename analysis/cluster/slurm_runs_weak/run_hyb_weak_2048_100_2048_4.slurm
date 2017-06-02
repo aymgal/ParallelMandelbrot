@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=hyb_weak
-#SBATCH --ntasks-per-node=1
 #SBATCH --account=phpc2017
 #SBATCH --mail-user=aymeric.galan@epfl.ch --mail-type=FAIL
 

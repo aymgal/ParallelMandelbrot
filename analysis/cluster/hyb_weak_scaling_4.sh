@@ -22,14 +22,13 @@ cd ../../src 			# go there to compile
 make hyb
 cd ../analysis/cluster	# come back here to run
 
-n_proc_min=2
-n_proc_max=32
-n_proc=$n_proc_min
-
 ### problem size doubles when number of processors doubles
 ### --> N multiplied by sqrt(2)
 
-for N in 1024 1448 2048 2896 4096 5793
+n_proc=2
+
+# for N in 1024 1448 2048 2896 4096 5793
+for N in 2048 2896 4096 5793 # not enough resources to go up to 64 ranks + 4 threads/rank...
 do
 	n_row=$N # division in rows equal to N (total of N rows of 1 pixel thick)
 
