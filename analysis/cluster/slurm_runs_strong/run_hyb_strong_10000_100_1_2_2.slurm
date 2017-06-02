@@ -2,6 +2,8 @@
 #SBATCH --job-name=hyb_strong_thr
 #SBATCH --ntasks=2		# number of MPI ranks
 #SBATCH --cpus-per-task=2	# number of threads/rank
+#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-socket=1
 #SBATCH --account=phpc2017
 #SBATCH --mail-user=aymeric.galan@epfl.ch --mail-type=FAIL
 
@@ -13,9 +15,7 @@ module load mvapich2/2.2b
 
 outfile=hyb_strong_10000_100_1_2_x.dat
 
-export OMP_NUM_THREAD=$SLURM_CPUS_PER_TASK
-
-echo $OMP_NUM_THREAD
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 for (( i = 1; i <= 10; i++ )) # for averaging compute time over 10 samples
 do	

@@ -6,7 +6,7 @@
 
 sdir=slurm_runs_strong
 
-N=10000
+N=1000
 n_iter=100
 n_row=1  # because only 1 worker (because n_proc=2)
 n_proc=2
