@@ -4,9 +4,10 @@
 
 sdir=slurm_runs_N
 
+N=10000
 n_iter=100
 
-outfile=srl_N_10000_${n_iter}_1_1_1.dat
+outfile=srl_N_${N}_${n_iter}_1_1_1.dat
 echo "Output file name : " $outfile
 
 mkdir -p outputs
@@ -21,8 +22,6 @@ cd ../analysis/cluster	# come back here to run
 
 ### problem size doubles when number of processors doubles
 ### --> N multiplied by sqrt(2)
-
-N=10000
 
 echo "Going to run several times mandel_srl, with parameters N = $N, \
 max iter = $n_iter, rows = 1, procs = 1, threads = 1)"
