@@ -24,8 +24,8 @@ cd ../analysis/cluster	# come back here to run
 
 for N in 1024 1448 2048 2896 4096 5793
 do
-	echo "Going to run several times mandel_srl, with parameters N = $N, \
-max iter = $n_iter, rows = 1, procs = 1, threads = 1)"
+	echo "Going to run several times mandel_srl with I/O, \
+with parameters N = $N, max iter = $n_iter, rows = 1, procs = 1, threads = 1)"
 
 	sbatch -n 1 ${sdir}/run_srl_N_${N}_${n_iter}_IO.slurm
 
