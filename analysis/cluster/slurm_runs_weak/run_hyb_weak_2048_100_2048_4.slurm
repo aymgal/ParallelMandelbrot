@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=hyb_weak
-#SBATCH --ntasks-per-socket=1
 #SBATCH --account=phpc2017
 #SBATCH --mail-user=aymeric.galan@epfl.ch --mail-type=FAIL
 
@@ -8,6 +7,7 @@
 ####SBATCH --nodes=
 ####SBATCH --cpu_per_task=
 ####SBATCH --ntasks-per-node=
+####SBATCH --ntasks-per-socket=
 ####SBATCH --reservation=
 
 module purge
