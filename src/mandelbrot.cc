@@ -117,13 +117,13 @@ void MandelbrotSet::run() {
   /* computation */
   compute_set();
 
+#ifdef OUTPUT_IMAGE
+    m_pdumper->dump(m_global_nx, m_max_iter);
+#endif
+
   m_ptimer->stop_chrono();
 #ifdef OUTPUT_TIMINGS
   if (m_prank == 0) cout_timing(m_ptimer->get_timing());
-#endif
-
-#ifdef OUTPUT_IMAGE
-    m_pdumper->dump(m_global_nx, m_max_iter);
 #endif
 
 /* serial or OpenMP-only */
@@ -133,13 +133,13 @@ void MandelbrotSet::run() {
   /* computation */
   compute_set();
 
+#ifdef OUTPUT_IMAGE
+    m_pdumper->dump(m_global_nx, m_max_iter);
+#endif
+
   m_ptimer->stop_chrono();
 #ifdef OUTPUT_TIMINGS
   cout_timing(m_ptimer->get_timing());
-#endif
-
-#ifdef OUTPUT_IMAGE
-    m_pdumper->dump(m_global_nx, m_max_iter);
 #endif
 #endif
 }

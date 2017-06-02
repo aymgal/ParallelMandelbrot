@@ -22,7 +22,7 @@ cd ../analysis/cluster	# come back here to run
 ### problem size doubles when number of processors doubles
 ### --> N multiplied by sqrt(2)
 
-for N in 1024 1448 2048 2896 4096 5793
+for N in 1024 1448 2048 2896 4096
 do
 	echo "Going to run several times mandel_srl with I/O, \
 with parameters N = $N, max iter = $n_iter, rows = 1, procs = 1, threads = 1)"
