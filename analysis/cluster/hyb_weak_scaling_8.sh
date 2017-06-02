@@ -28,7 +28,7 @@ cd ../analysis/cluster	# come back here to run
 n_proc=2
 
 # for N in 1024 1448 2048 2896 4096 5793
-for N in 2048 2896 4096 5793 # not enough resources to go up to 64 ranks + 4 threads/rank...
+for N in 2896 4096 5793 # not enough resources to go up to 64 ranks + 8 threads/rank...
 do
 	n_row=$N # division in rows equal to N (total of N rows of 1 pixel thick)
 
