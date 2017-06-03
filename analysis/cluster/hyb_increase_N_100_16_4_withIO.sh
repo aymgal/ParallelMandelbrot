@@ -31,7 +31,8 @@ do
 	echo "Going to run several times mandel_mpi with I/O, \
 with parameters N = $N, max iter = $n_iter, rows = $n_row, procs = $n_proc, threads = $n_thread)"
 
-	sbatch -n ${n_proc} -c ${n_thread} ${sdir}/run_hyb_N_${N}_${n_iter}_${n_row}_${n_proc}_IO.slurm
+	sbatch -n ${n_proc} -c ${n_thread} \
+		${sdir}/run_hyb_N_${N}_${n_iter}_${n_row}_${n_proc}_${n_thread}_IO.slurm
 
 done
 
