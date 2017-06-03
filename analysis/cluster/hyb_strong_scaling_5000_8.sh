@@ -24,7 +24,7 @@ cd ../../src 			# go there to compile
 make hyb
 cd ../analysis/cluster	# come back here to run
 
-for n_proc in 2 4 8 12
+for n_proc in 2 4 8
 do
 	echo "Going to run several times mandel_hyb, with parameters N = $N, \
 max iter = $n_iter, rows = $n_row, procs = $n_proc, threads = $n_thread)"
