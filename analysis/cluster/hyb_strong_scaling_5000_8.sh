@@ -29,7 +29,7 @@ do
 	echo "Going to run several times mandel_hyb, with parameters N = $N, \
 max iter = $n_iter, rows = $n_row, procs = $n_proc, threads = $n_thread)"
 
-	sbatch -n ${n_proc} -c ${n_thread} ${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}.slurm
+	sbatch -n ${n_proc} -c ${n_thread} ${sdir}/run_hyb_strong_${N}_${n_iter}_${n_row}_${thread}.slurm
 
 done
 
