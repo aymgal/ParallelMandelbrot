@@ -13,3 +13,5 @@ analysis/cluster/*.sh
 analysis/cluster/slurm_*
 analysis/shell/*.dat
 analysis/shell/*.png
+!report/*.pdf
+!report/figures
