@@ -9,5 +9,7 @@ src/mandel_srl
 src/mandel_omp
 src/mandel_mpi
 src/mandel_hyb
+analysis/cluster/*.sh
+analysis/cluster/slurm_*
 analysis/shell/*.dat
 analysis/shell/*.png
