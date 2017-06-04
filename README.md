@@ -25,4 +25,4 @@ It is written in a unique source code. The Makefile controls which version is co
 Limits of the image are defined by macros at the beginning of the `main.cc` file.
 Moreover, various macros can be activated in the Makefile : optional optimizations, computations  with `std::complex` instead of standard floating point numbers, use double precision, print a gradient image instead of black/white one, *etc*...
 
-A bunch of Python scripts are also provided. Use the `make_plots.py` to generate every figure that are included in the report. Type `python make_plots.py --help` to display options. Use the `comple_fractals.py` to get an animated and colorec view of the Mandelbrot set.
+A bunch of Python scripts are also provided. Use the `make_plots.py` to generate every figure that are included in the report. Type `python make_plots.py --help` to display options. Use the `complex_fractals.py` to get an animated and colorec view of the Mandelbrot set.
