@@ -7,15 +7,12 @@ globalfsize = 14
 figsize       = (8, 6)
 linewidth     = 2
 fontsize      = globalfsize
-legendsize    = globalfsize
+legendsize    = 18
 labelsize     = globalfsize
 labelsize_tex = 18
 titlesize     = globalfsize
-ticksize      = globalfsize
+ticksize      = 18
 fmt = 'pdf'
-
-# LaTeX symbols shortcuts
-mfH2 = r"$f_{\mathrm{H}_2}$"
 
 mpl.rcParams['axes.labelpad']        = 5
 mpl.rcParams['axes.labelsize']       = labelsize
@@ -30,7 +27,7 @@ mpl.rcParams['grid.linewidth']       = 0.5
 mpl.rcParams['legend.fontsize']      = legendsize
 mpl.rcParams['legend.numpoints']     = 3
 mpl.rcParams['legend.scatterpoints'] = 3
-mpl.rcParams['legend.markerscale']   = 2.5
+mpl.rcParams['legend.markerscale']   = 1
 mpl.rcParams['lines.color']          = 'b'
 mpl.rcParams['lines.linewidth']      = linewidth
 mpl.rcParams['patch.linewidth']      = 1
@@ -75,7 +72,7 @@ mpl.rcParams['legend.edgecolor']     = 'inherit'
 #** figure display
 mpl.rcParams['figure.dpi'] = 80
 
-#
+
 def savefig(figobj, figdir, figname):
 	savedir = figdir
 	if not os.path.exists(savedir):
@@ -85,13 +82,5 @@ def savefig(figobj, figdir, figname):
 	figobj.savefig(savepath)
 	print "Figure saved."
 
-def figsize(scale):
-    fig_width_pt = 483.697                          # Get this from LaTeX using \the\textwidth
-    inches_per_pt = 1.0/72.27                       # Convert pt to inch
-    golden_mean = (np.sqrt(5.0)-1.0)/2.0            # Aesthetic ratio (you could change this)
-    fig_width = fig_width_pt*inches_per_pt*scale    # width in inches
-    fig_height = fig_width*golden_mean              # height in inches
-    fig_size = [fig_width, fig_height]
-    return fig_size
 
 
