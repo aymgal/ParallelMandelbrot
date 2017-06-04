@@ -5,9 +5,8 @@
 Different versions :
 * serial
 * OpenMP
-* MPI
-* MPI with master/workers load-balancing
-* hybrid OpenMP + MPI
+* MPI (master/workers with load-balancing)
+* hybrid OpenMP+MPI
 
 Output example, for a limits in the complex plane defined by [-0.2, 0.4] x [0.5, 1.1] :
 <p align="center">
@@ -18,9 +17,10 @@ It is written in a unique source code. The Makefile controls which version is co
 * `make srl` for serial version
 * `make omp` for OpenMP version
 * `make mpi` 
-	* with `MPI_SIMPLE` flag for simple MPI version
+	* with `MPI_SIMPLE` flag for non-load-balanced version (study purpose only)
 	* with `MPI_MASTER_WORKERS` flag for load-balancing MPI version
-* `make hyb` with appropriate MPI flag for hybrid OpenMP + MPI version
+* `make hyb` for hybrid OpenMP+MPI version
 * `make` for all.
 
 Limits of the image are defined by macros at the beginning of the `main.cc` file.
+Moreover, various macros can be activated in the Makefile : optional optimizations, computations  with `std::complex` instead of standard floating point numbers, use double precision, print a gradient image instead of black/white one, *etc*...
