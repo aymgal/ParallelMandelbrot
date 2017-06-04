@@ -3,8 +3,14 @@ import numpy as np
 
 # ---------------------------------------
 
+def ticks_texify(value, index):
+    return r'${}$'.format(value)
+
 def ticks_int(value, index):
     return r'${:d}$'.format(int(value))
+
+def ticks_float_p1(value, index):
+    return r'${:.1f}$'.format(value)
 
 def ticks_float_p2(value, index):
     return r'${:.2f}$'.format(value)

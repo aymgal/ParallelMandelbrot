@@ -93,6 +93,12 @@ def plot_all_runtimes(datadir):
     ax1.loglog(Nx, time_hyb_IO, marker='d', ms=ms, lw=lw, ls='--', 
                basex=2, zorder=10, color='#D62728', dashes=(5, 1.5),
                label=r"$\rm{hybrid},\ $"+r"$p=16,\ t=4,\ \rm{I/O}$")
+    ax1.loglog(Nx, 2.5e-7*Nx**2, color='#7F7F7F', lw=0.7, ls='-.', basex=2)
+    ax1.text(0.18, 0.48, r"$T\propto N^2$", rotation=7,
+             verticalalignment='bottom', horizontalalignment='right', 
+             color='#7F7F7F', fontsize=prp.labelsize_tex, 
+             bbox={'facecolor': 'white', 'alpha': 0, 'pad': 6},
+             transform=ax1.transAxes)
     ax1.xaxis.set_ticks([1024, 1448, 2048, 2896, 4096])
     ax1.xaxis.set_major_formatter(tick.FuncFormatter(u.ticks_int))
     ax1.set_xlabel(r"$\rm{image\ size,}\ $"+r"$N\ \rm{[px]}$", fontsize=prp.labelsize_tex)

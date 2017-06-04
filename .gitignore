@@ -1,3 +1,4 @@
+!.gitignore
 .DS_Store
 **/.DS_Store
 **/*.o
@@ -13,5 +14,6 @@ analysis/cluster/*.sh
 analysis/cluster/slurm_*
 analysis/shell/*.dat
 analysis/shell/*.png
-!report/*.pdf
+report/*
+!report/paper.pdf
 !report/figures
